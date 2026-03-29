@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小审 3.0 - 审计作业平台</title>
+  <link rel="stylesheet" href="css/styles.css?v=20260312-autosplit1">
+  <link rel="stylesheet" href="css/pm.css?v=20260312-autosplit1">
+  <link rel="stylesheet" href="css/gd.css?v=20260312-autosplit1">
+  <link rel="stylesheet" href="css/im-panel.css?v=20260312-autosplit1">
+  <link rel="stylesheet" href="css/wo.css?v=20260312-autosplit1">
+  <link rel="stylesheet" href="css/sm.css?v=20260312-autosplit1">
+  <!-- Favicon - 小审 owl icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%236366F1'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18'>审</text></svg>">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ════════════════════════════════════════════
+       FILE VIEW (文件视图)
+       桌面式操作体验，参考 PostHog 设计理念
+       ════════════════════════════════════════════ -->
+  <div id="file-view" class="view active">
+
+    <!-- ── 顶部导航栏 (业务管理区) ── -->
+    <nav class="file-topnav">
+      <div class="nav-left">
+        <!-- Logo -->
+        <div class="logo">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 小审猫头鹰 Logo -->
+            <circle cx="16" cy="16" r="15" fill="url(#logoGrad)"/>
+            <ellipse cx="11.5" cy="14" rx="4" ry="4.5" fill="white" opacity="0.9"/>
+            <ellipse cx="20.5" cy="14" rx="4" ry="4.5" fill="white" opacity="0.9"/>
+            <circle cx="11.5" cy="14" r="2" fill="#1E293B"/>
+            <circle cx="20.5" cy="14" r="2" fill="#1E293B"/>
+            <circle cx="12" cy="13.3" r="0.7" fill="white"/>
+            <circle cx="21" cy="13.3" r="0.7" fill="white"/>
+            <path d="M14 19 Q16 21 18 19" stroke="#F59E0B" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M6 8 L11 12" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+            <path d="M26 8 L21 12" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                <stop offset="0%" stop-color="#6366F1"/>
+                <stop offset="100%" stop-color="#8B5CF6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>小审 3.0</span>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+          <a href="#" class="active">工作区</a>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input type="text" placeholder="搜索文件、项目、底稿...">
+        </div>
+
+        <!-- 视图切换 -->
+        <div class="view-toggle">
+          <button class="view-toggle-btn active" data-view="file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:4px">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            文件视图
+          </button>
+          <button class="view-toggle-btn" data-view="business">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:4px">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9h18"/><path d="M9 21V9"/>
+            </svg>
+            业务视图
+          </button>
+        </div>
+
+        <!-- 通知 -->
+        <button class="icon-btn" data-tooltip="通知">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="badge"></span>
+        </button>
+
+        <!-- 用户头像 -->
+        <div class="user-avatar">张</div>
+      </div>
+    </nav>
+
+    <!-- ── 主内容区域 ── -->
+    <div class="file-main">
+
+      <!-- 文件作业区 (Desktop Workspace) -->
+      <div class="desktop-workspace">
+
+        <!-- 路径导航栏（面包屑） - 由 JS 动态渲染 -->
+        <div class="desktop-path" id="desktop-path"></div>
+
+        <!-- 桌面网格 - 由 JS 动态渲染 -->
+        <div class="desktop-grid" id="desktop-grid"></div>
+
+        <!-- 背景插画 (PostHog 风格) - 城市天际线 + 猫头鹰 -->
+        <div class="desktop-illustration">
+          <svg viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 城市天际线 -->
+            <rect x="50" y="320" width="60" height="180" rx="4" fill="#6366F1"/>
+            <rect x="55" y="330" width="12" height="10" rx="2" fill="white" opacity="0.3"/>
+            <rect x="73" y="330" width="12" height="10" rx="2" fill="white" opacity="0.2"/>
+            <rect x="55" y="348" width="12" height="10" rx="2" fill="white" opacity="0.2"/>
+            <rect x="73" y="348" width="12" height="10" rx="2" fill="white" opacity="0.3"/>
+            <rect x="55" y="366" width="12" height="10" rx="2" fill="white" opacity="0.3"/>
+            
+            <rect x="130" y="260" width="50" height="240" rx="4" fill="#8B5CF6"/>
+            <rect x="135" y="270" width="10" height="8" rx="2" fill="white" opacity="0.3"/>
+            <rect x="150" y="270" width="10" height="8" rx="2" fill="white" opacity="0.2"/>
+            <rect x="165" y="270" width="10" height="8" rx="2" fill="white" opacity="0.3"/>
+            <rect x="135" y="286" width="10" height="8" rx="2" fill="white" opacity="0.2"/>
+            <rect x="150" y="286" width="10" height="8" rx="2" fill="white" opacity="0.3"/>
+
+            <rect x="200" y="350" width="70" height="150" rx="4" fill="#A78BFA"/>
+            <rect x="205" y="360" width="14" height="10" rx="2" fill="white" opacity="0.2"/>
+            <rect x="225" y="360" width="14" height="10" rx="2" fill="white" opacity="0.3"/>
+            <rect x="245" y="360" width="14" height="10" rx="2" fill="white" opacity="0.2"/>
+
+            <rect x="290" y="290" width="55" height="210" rx="4" fill="#6366F1"/>
+            <rect x="360" y="380" width="45" height="120" rx="4" fill="#C4B5FD"/>
+            <rect x="420" y="330" width="65" height="170" rx="4" fill="#8B5CF6"/>
+            <rect x="500" y="370" width="50" height="130" rx="4" fill="#A78BFA"/>
+            <rect x="565" y="300" width="55" height="200" rx="4" fill="#6366F1"/>
+            <rect x="635" y="360" width="60" height="140" rx="4" fill="#C4B5FD"/>
+            <rect x="710" y="340" width="50" height="160" rx="4" fill="#8B5CF6"/>
+
+            <!-- 小审猫头鹰吉祥物 (大) -->
+            <g transform="translate(500, 80) scale(1.8)">
+              <!-- 身体 -->
+              <ellipse cx="40" cy="55" rx="30" ry="32" fill="#6366F1"/>
+              <!-- 翅膀 -->
+              <ellipse cx="14" cy="52" rx="10" ry="18" fill="#4F46E5" transform="rotate(-10 14 52)"/>
+              <ellipse cx="66" cy="52" rx="10" ry="18" fill="#4F46E5" transform="rotate(10 66 52)"/>
+              <!-- 肚子 -->
+              <ellipse cx="40" cy="60" rx="18" ry="20" fill="#818CF8"/>
+              <!-- 眼睛背景 -->
+              <circle cx="30" cy="42" r="10" fill="white"/>
+              <circle cx="50" cy="42" r="10" fill="white"/>
+              <!-- 眼珠 -->
+              <circle cx="32" cy="42" r="5" fill="#1E293B"/>
+              <circle cx="52" cy="42" r="5" fill="#1E293B"/>
+              <!-- 眼睛高光 -->
+              <circle cx="34" cy="40" r="1.8" fill="white"/>
+              <circle cx="54" cy="40" r="1.8" fill="white"/>
+              <!-- 眼镜 -->
+              <circle cx="30" cy="42" r="11" stroke="#F59E0B" stroke-width="1.5" fill="none"/>
+              <circle cx="50" cy="42" r="11" stroke="#F59E0B" stroke-width="1.5" fill="none"/>
+              <path d="M41 42 L39 42" stroke="#F59E0B" stroke-width="1.5"/>
+              <path d="M19 40 L10 38" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M61 40 L70 38" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- 嘴巴 -->
+              <path d="M36 52 L40 56 L44 52" fill="#F59E0B"/>
+              <!-- 耳朵 -->
+              <path d="M18 24 L25 35 L12 35Z" fill="#4F46E5"/>
+              <path d="M62 24 L55 35 L68 35Z" fill="#4F46E5"/>
+              <!-- 脚 -->
+              <path d="M30 85 L25 92 M30 85 L30 92 M30 85 L35 92" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+              <path d="M50 85 L45 92 M50 85 L50 92 M50 85 L55 92" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+              <!-- 手持放大镜 -->
+              <g transform="translate(65, 55) rotate(15)">
+                <circle cx="0" cy="0" r="8" stroke="#10B981" stroke-width="2.5" fill="rgba(16,185,129,0.1)"/>
+                <path d="M6 6 L14 14" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+              </g>
+            </g>
+
+            <!-- 装饰元素: 浮动文档 -->
+            <g transform="translate(120, 100)" opacity="0.6">
+              <rect width="30" height="38" rx="4" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+              <rect x="5" y="6" width="16" height="2" rx="1" fill="#CBD5E1"/>
+              <rect x="5" y="12" width="20" height="2" rx="1" fill="#CBD5E1"/>
+              <rect x="5" y="18" width="12" height="2" rx="1" fill="#CBD5E1"/>
+              <rect x="5" y="28" width="8" height="4" rx="2" fill="#10B981" opacity="0.5"/>
+            </g>
+
+            <g transform="translate(320, 60) rotate(-5)" opacity="0.5">
+              <rect width="25" height="32" rx="3" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+              <rect x="4" y="5" width="14" height="2" rx="1" fill="#CBD5E1"/>
+              <rect x="4" y="10" width="17" height="2" rx="1" fill="#CBD5E1"/>
+              <rect x="4" y="15" width="10" height="2" rx="1" fill="#CBD5E1"/>
+            </g>
+
+            <!-- 装饰: 数据图表 -->
+            <g transform="translate(680, 140)" opacity="0.5">
+              <rect width="60" height="45" rx="6" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+              <rect x="8" y="30" width="6" height="8" rx="2" fill="#6366F1" opacity="0.6"/>
+              <rect x="18" y="22" width="6" height="16" rx="2" fill="#8B5CF6" opacity="0.6"/>
+              <rect x="28" y="26" width="6" height="12" rx="2" fill="#A78BFA" opacity="0.6"/>
+              <rect x="38" y="18" width="6" height="20" rx="2" fill="#6366F1" opacity="0.6"/>
+              <rect x="48" y="14" width="6" height="24" rx="2" fill="#8B5CF6" opacity="0.6"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Dock 栏 (底部快捷操作) -->
+        <div class="desktop-dock">
+          <div class="dock-item" data-action="link-ledger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span class="dock-tooltip">关联账套</span>
+          </div>
+          <div class="dock-item" data-action="work-order">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <span class="dock-tooltip">工单中心</span>
+          </div>
+          <div class="dock-item" data-action="submit-review">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span class="dock-tooltip">发起预审单</span>
+          </div>
+
+          <div class="dock-divider"></div>
+
+          <div class="dock-item" data-action="open-ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="dock-tooltip">小审AI助手</span>
+          </div>
+          <div class="dock-item" data-action="settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <span class="dock-tooltip">设置</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── IM + AI 智能助理面板 (文件视图) ── -->
+      <div class="ai-panel" id="ai-panel-file">
+        <!-- Tabs: 消息 / 工作地图 -->
+        <div class="ai-panel-tabs">
+          <button class="ai-panel-tab active" data-tab="im">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            消息
+            <span class="tab-unread" id="tab-unread-file"></span>
+          </button>
+          <button class="ai-panel-tab" data-tab="map">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
+            </svg>
+            工作地图
+          </button>
+          <button class="ai-panel-close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- IM 内容区 (由 JS 动态渲染) -->
+        <div class="ai-tab-content active" data-tab-content="im" id="im-container-file">
+          <!-- JS 会在这里渲染会话列表 / 聊天视图 -->
+        </div>
+
+        <!-- 工作地图 -->
+        <div class="ai-tab-content work-map-content" data-tab-content="map">
+          <div style="padding: var(--space-4);">
+            <h4 style="font-size: 0.857rem; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-3);">项目进度总览</h4>
+            <div class="map-item"><div class="map-dot" style="background: var(--success);"></div><div class="map-item-info"><div class="map-item-name">01 审计计划</div><div class="map-item-status">已完成 · 3天前更新</div></div><div class="map-item-count">12</div></div>
+            <div class="map-item"><div class="map-dot" style="background: var(--brand-primary);"></div><div class="map-item-info"><div class="map-item-name">02 资产类</div><div class="map-item-status">进行中 · 2小时前更新</div></div><div class="map-item-count">48</div></div>
+            <div class="map-item"><div class="map-dot" style="background: var(--brand-primary);"></div><div class="map-item-info"><div class="map-item-name">03 负债类</div><div class="map-item-status">进行中 · 昨天更新</div></div><div class="map-item-count">32</div></div>
+            <div class="map-item"><div class="map-dot" style="background: var(--warning);"></div><div class="map-item-info"><div class="map-item-name">04 审计报告</div><div class="map-item-status">待开始</div></div><div class="map-item-count">0</div></div>
+            <div class="map-item"><div class="map-dot" style="background: var(--text-tertiary);"></div><div class="map-item-info"><div class="map-item-name">交付文件夹</div><div class="map-item-status">等待交付中心</div></div><div class="map-item-count">5</div></div>
+            <div style="margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid rgba(0,0,0,0.06);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-2);"><span style="font-size: 0.786rem; color: var(--text-secondary);">整体进度</span><span style="font-size: 0.786rem; font-weight: 600; color: var(--brand-primary);">42%</span></div>
+              <div class="progress-bar"><div class="progress-bar-fill" style="width: 42%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════
+       BUSINESS VIEW (业务视图)
+       传统网页工作台体验
+       ════════════════════════════════════════════ -->
+  <div id="business-view" class="view">
+
+    <!-- ── 左侧边栏 ── -->
+    <aside class="biz-sidebar">
+      <!-- Logo + 品牌名 -->
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 36 36" fill="none">
+          <circle cx="18" cy="18" r="17" fill="url(#sideLogoGrad)"/>
+          <ellipse cx="13" cy="16" rx="3.5" ry="4" fill="white" opacity="0.9"/>
+          <ellipse cx="23" cy="16" rx="3.5" ry="4" fill="white" opacity="0.9"/>
+          <circle cx="13" cy="16" r="1.8" fill="#1E293B"/>
+          <circle cx="23" cy="16" r="1.8" fill="#1E293B"/>
+          <circle cx="13.8" cy="15.3" r="0.6" fill="white"/>
+          <circle cx="23.8" cy="15.3" r="0.6" fill="white"/>
+          <path d="M16 21 Q18 23 20 21" stroke="#F59E0B" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="sideLogoGrad" x1="0" y1="0" x2="36" y2="36">
+              <stop offset="0%" stop-color="#6366F1"/>
+              <stop offset="100%" stop-color="#8B5CF6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="sidebar-brand-name">小审 3.0</span>
+      </div>
+
+      <!-- ── 切回文件视图（单按钮）：双向对置箭头 = "视图切换" ── -->
+      <button class="sidebar-view-back view-toggle-btn" data-view="file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <!-- 上箭头：向右 -->
+          <line x1="4" y1="8" x2="20" y2="8"/>
+          <polyline points="15 4 20 8 15 12"/>
+          <!-- 下箭头：向左 -->
+          <line x1="20" y1="16" x2="4" y2="16"/>
+          <polyline points="9 12 4 16 9 20"/>
+        </svg>
+        <span class="sidebar-tooltip">文件视图</span>
+      </button>
+
+      <!-- 导航项目 -->
+      <nav class="sidebar-nav">
+        <button class="sidebar-item active" data-nav="dashboard">
+          <!-- 柱状图图标，代表数据仪表盘，区别于四宫格的"文件视图"切换按钮 -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="8"/><line x1="12" y1="20" x2="12" y2="3"/>
+            <line x1="6"  y1="20" x2="6"  y2="13"/>
+            <line x1="2"  y1="20" x2="22" y2="20"/>
+          </svg>
+          <span class="sidebar-tooltip">仪表盘</span>
+        </button>
+        <button class="sidebar-item" data-nav="projects">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span class="sidebar-tooltip">工作区</span>
+        </button>
+        <button class="sidebar-item" data-nav="customers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span class="sidebar-tooltip">客户管理</span>
+        </button>
+        <button class="sidebar-item" data-nav="orders">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <span class="sidebar-tooltip">工单中心</span>
+        </button>
+        <button class="sidebar-item" data-nav="riskctl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="sidebar-tooltip">风控中心</span>
+        </button>
+        <button class="sidebar-item" data-nav="data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span class="sidebar-tooltip">账套中心</span>
+        </button>
+      </nav>
+
+      <!-- 底部操作 -->
+      <div class="sidebar-bottom">
+        <button class="sidebar-item ai-btn" data-action="open-ai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span class="sidebar-tooltip">AI助手</span>
+        </button>
+        <button class="sidebar-item" data-nav="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="sidebar-tooltip">系统管理</span>
+        </button>
+        <button class="sidebar-item">
+          <div class="user-avatar" style="width:28px;height:28px;font-size:0.75rem;">张</div>
+          <span class="sidebar-tooltip">个人中心</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── 主内容区域 ── -->
+    <div class="biz-main">
+
+      <!-- ══ 工作区视图 (data-nav="projects") ══ -->
+      <div id="biz-panel-projects" class="biz-panel" style="display:none;">
+
+        <!-- 页头：标题 + 新建按钮 -->
+        <div class="ws-page-header">
+          <div class="ws-page-title-group">
+            <h1 class="ws-page-title">工作区总览</h1>
+            <p class="ws-page-desc">集中管理和追踪所有审计工作区项目</p>
+        </div>
+          <button class="btn btn-primary ws-new-btn" id="btn-new-workspace">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            新建工作区
+          </button>
+          </div>
+
+        <!-- 工具栏：搜索 + 星标 + 筛选 + 视图切换 -->
+        <div class="ws-toolbar">
+          <div class="ws-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15" class="ws-search-icon">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" class="ws-search-input" id="ws-search" placeholder="搜索工作区名称…" />
+          </div>
+          <div class="ws-toolbar-right">
+            <button class="ws-tool-btn" id="ws-star-filter" title="只看特别关注">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              特别关注
+            </button>
+            <button class="ws-tool-btn" id="ws-filter-toggle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              高级筛选
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12" class="ws-filter-chevron">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="ws-view-toggle-group">
+              <button class="ws-view-btn active" data-ws-view="card" title="卡片视图">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+              </button>
+              <button class="ws-view-btn" data-ws-view="list" title="列表视图">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 高级筛选展开面板 -->
+        <div class="ws-filter-panel" id="ws-filter-panel">
+          <div class="ws-filter-grid">
+            <div class="ws-filter-field">
+              <label>状态</label>
+              <select class="ws-filter-select" id="wf-status">
+                <option value="">全部</option>
+                <option value="执行中">执行中</option>
+                <option value="送审中">送审中</option>
+              </select>
+            </div>
+            <div class="ws-filter-field">
+              <label>关联集团</label>
+              <input type="text" class="ws-filter-input" id="wf-group" placeholder="输入集团名称…"/>
+            </div>
+            <div class="ws-filter-field">
+              <label>业务类型</label>
+              <select class="ws-filter-select" id="wf-biz-type">
+                <option value="">全部</option>
+                <option value="年度审计">年度审计</option>
+                <option value="专项审计">专项审计</option>
+                <option value="IPO审计">IPO审计</option>
+              </select>
+            </div>
+            <div class="ws-filter-field">
+              <label>项目年度</label>
+              <select class="ws-filter-select" id="wf-year">
+                <option value="">全部</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+            </div>
+            <div class="ws-filter-field">
+              <label>所属部门</label>
+              <input type="text" class="ws-filter-input" id="wf-dept" placeholder="输入部门名称…"/>
+            </div>
+            <div class="ws-filter-field ws-filter-actions">
+              <button class="btn btn-primary" id="ws-apply-filter" style="padding: 6px 20px;">应用筛选</button>
+              <button class="btn btn-outline" id="ws-reset-filter" style="padding: 6px 16px;">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片/列表渲染区 -->
+        <div class="ws-content-area" id="ws-cards-container">
+          <!-- 由 JS 动态渲染 -->
+        </div>
+
+      </div>
+      <!-- ══ /工作区视图 ══ -->
+
+      <!-- ══ 仪表盘视图 (data-nav="dashboard") ══ -->
+      <div id="biz-panel-dashboard" class="biz-panel">
+        <div class="dash-container">
+
+          <!-- ── 页头 ── -->
+          <div class="dash-page-header">
+            <div>
+              <h1 class="dash-page-title">仪表盘</h1>
+              <p class="dash-page-desc">审计项目推进总览 · 四大核心阶段追踪</p>
+            </div>
+            <div class="dash-header-right">
+              <span class="dash-date-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                2026年3月
+              </span>
+            </div>
+          </div>
+
+          <!-- ── 汇总统计卡（4个）── -->
+          <div class="dash-stats-row" id="dash-stats-row">
+            <!-- 由 JS 渲染 -->
+          </div>
+
+          <!-- ── 阶段进度区 ── -->
+          <div class="dash-section">
+            <div class="dash-section-head">
+              <div>
+                <h2 class="dash-section-title">项目推进总览</h2>
+                <p class="dash-section-desc">按审计四大核心阶段追踪各工作区项目进度，进度数据实时更新</p>
+              </div>
+              <!-- 图例 -->
+              <div class="dash-legend">
+                <span class="dash-legend-item"><i style="background:#6366F1"></i>计划阶段</span>
+                <span class="dash-legend-item"><i style="background:#3B82F6"></i>范围界定</span>
+                <span class="dash-legend-item"><i style="background:#14B8A6"></i>获取证据</span>
+                <span class="dash-legend-item"><i style="background:#10B981"></i>完成阶段</span>
+              </div>
+            </div>
+
+            <!-- 进度表格 -->
+            <div class="dash-phase-table">
+              <!-- 表头 -->
+              <div class="dpt-header">
+                <div class="dpt-col-name">工作区</div>
+                <div class="dpt-col-phase"><span class="dpt-phase-dot" style="background:#6366F1"></span>计划阶段</div>
+                <div class="dpt-col-phase"><span class="dpt-phase-dot" style="background:#3B82F6"></span>范围界定</div>
+                <div class="dpt-col-phase"><span class="dpt-phase-dot" style="background:#14B8A6"></span>获取证据</div>
+                <div class="dpt-col-phase"><span class="dpt-phase-dot" style="background:#10B981"></span>完成阶段</div>
+                <div class="dpt-col-overall">整体进度</div>
+              </div>
+              <!-- 数据行由 JS 渲染 -->
+              <div id="dash-phase-rows"></div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /biz-panel-dashboard -->
+      <!-- ══ /仪表盘视图 ══ -->
+
+      <!-- ══════════════════════════════════════════════════
+           工作区详情视图 (data-nav="projects" → 点击具体工作区)
+           布局：顶部操作栏 + Tab 标签栏 + 左文件树 + 右内容区
+           ══════════════════════════════════════════════════ -->
+      <div id="biz-panel-project-detail" class="biz-panel" style="display:none;">
+
+        <!-- ── 顶部操作栏 ── -->
+        <header class="pd-header">
+          <!-- 面包屑导航 -->
+          <nav class="pd-breadcrumb">
+            <button class="pd-bc-link" id="pd-back-btn">工作区总览</button>
+            <span class="pd-bc-sep">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </span>
+            <span class="pd-bc-current" id="pd-ws-title">—</span>
+          </nav>
+          <!-- 操作按钮组 -->
+          <div class="pd-header-actions">
+            <button class="btn btn-outline btn-sm" id="btn-ledger-assoc">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            账套关联
+          </button>
+            <button class="btn btn-orange" id="btn-submit-order">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+              发起工单
+          </button>
+            <button class="btn btn-info" id="btn-submit-review" onclick="rcOpenSubmitReview()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            发起预审单
+          </button>
+            <div style="width:1px;height:22px;background:rgba(0,0,0,0.08);margin:0 2px;"></div>
+          <div class="avatar-group">
+              <div class="avatar" style="background:#6366F1;">张</div>
+              <div class="avatar" style="background:#10B981;">李</div>
+              <div class="avatar" style="background:#F59E0B;">王</div>
+              <div class="avatar" style="background:#94A3B8;">+5</div>
+          </div>
+            <button class="icon-btn pm-header-icon" id="btn-members-icon" aria-label="项目成员">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span class="pm-icon-tip">项目成员</span>
+            </button>
+        </div>
+      </header>
+
+        <!-- ── Tab 标签栏 ── -->
+        <div class="pd-tabs">
+          <button class="pd-tab active" data-pdtab="worktable">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          工作台
+        </button>
+          <button class="pd-tab" data-pdtab="orders">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          工单管理
+        </button>
+          <button class="pd-tab" data-pdtab="review">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          送审管理
+        </button>
+          <button class="pd-tab" data-pdtab="members" id="pd-tab-members">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+            项目成员
+        </button>
+      </div>
+
+        <!-- ── 主体：Flexbox 左右分栏 ── -->
+        <div class="pd-body">
+
+          <!-- 左：固定宽度文件目录侧边栏 -->
+          <aside class="pd-file-sidebar">
+            <div class="pd-sidebar-hd">
+            <span>文件目录</span>
+              <button class="icon-btn" style="width:22px;height:22px;" title="新建文件夹">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+            <!-- 文件树由 JS 渲染 -->
+            <div class="pd-tree-wrap" id="pd-file-tree"></div>
+          </aside>
+
+          <!-- 右：自适应宽度内容区 -->
+          <div class="pd-content-wrap">
+
+            <!-- 工作台 Tab 面板 -->
+            <div class="pd-tab-panel active" id="pd-panel-worktable">
+              <!-- 未选文件夹时的空状态 -->
+              <div class="pd-folder-empty" id="pd-folder-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="44" height="44">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>请从左侧选择文件夹</p>
+              </div>
+              <!-- 文件夹内容（选中后显示）-->
+              <div class="pd-folder-content" id="pd-folder-content" style="display:none;">
+                <div class="pd-folder-hd">
+                  <h2 class="pd-folder-title" id="pd-folder-title"></h2>
+                  <button class="btn btn-outline btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <path d="M3 9h18"/><path d="M9 21V9"/>
+                    </svg>
+                    工作地图
+                  </button>
+                </div>
+                <!-- 文件列表表格 -->
+                <div class="pd-table-wrap">
+                  <table class="pd-file-table" id="pd-file-table">
+                    <thead>
+                      <tr id="pd-file-thead-row">
+                        <th style="min-width:200px;">文件名</th>
+                        <th style="width:90px;">大小</th>
+                        <th style="width:70px;">修改人</th>
+                        <th style="width:140px;">修改时间</th>
+                        <th style="width:80px;">当前版本</th>
+                        <th style="width:120px;text-align:center;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pd-file-tbody"></tbody>
+                  </table>
+                  <div class="pd-table-empty" id="pd-table-empty" style="display:none;">
+                    <p id="pd-table-empty-msg">该文件夹暂无文件，点击右上角新建</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 工单管理 Tab 面板 -->
+            <div class="pd-tab-panel" id="pd-panel-orders">
+              <!-- 工单管理内容由 wo.js renderWoMgrPanel() 渲染 -->
+              <div id="wo-mgr-container"></div>
+            </div>
+
+            <!-- 送审管理 Tab 面板 -->
+            <div class="pd-tab-panel" id="pd-panel-review">
+              <div id="rv-mgr-container"></div>
+            </div>
+
+            <!-- ════ 项目成员 Tab 面板 ════ -->
+            <div class="pd-tab-panel" id="pd-panel-members">
+
+              <!-- ── 内部导航：成员管理 / 角色权限 ── -->
+              <div class="pm-inner-nav">
+                <button class="pm-nav-btn active" data-pmtab="mgmt">成员管理</button>
+                <button class="pm-nav-btn" data-pmtab="roles">角色权限</button>
+              </div>
+
+              <!-- ══ 成员管理页 ══ -->
+              <div class="pm-pane active" id="pm-pane-mgmt">
+                <!-- 顶部：状态切换 + 工具栏 -->
+                <div class="pm-topbar">
+                  <div class="pm-status-tabs">
+                    <button class="pm-status active" data-pms="joined">
+                      已加入<span class="pm-badge" id="pm-cnt-joined">0</span>
+                    </button>
+                    <button class="pm-status" data-pms="left">
+                      已退出<span class="pm-badge pm-badge-grey" id="pm-cnt-left">0</span>
+                    </button>
+                  </div>
+                  <div class="pm-toolbar">
+                    <div class="pm-search-wrap">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                      <input id="pm-search" type="text" placeholder="搜索成员姓名…"/>
+                      </div>
+                    <button class="btn btn-outline btn-sm" id="pm-batch-btn" disabled>批量编辑角色</button>
+                    <button class="btn btn-primary btn-sm" id="pm-add-btn">+ 添加成员</button>
+                  </div>
+                </div>
+
+                <!-- 成员表格 -->
+                <div class="pm-table-outer">
+                  <table class="pm-table">
+                    <thead id="pm-thead"></thead>
+                    <tbody id="pm-tbody"></tbody>
+                  </table>
+                  <div class="pm-table-empty" id="pm-table-empty" style="display:none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="36" height="36">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            </svg>
+                    <p>暂无成员数据</p>
+                          </div>
+                        </div>
+
+                <!-- 底部：导出 + 分页 -->
+                <div class="pm-foot">
+                  <button class="btn btn-outline btn-sm" id="pm-export-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    导出
+                  </button>
+                  <div class="pm-pager" id="pm-pager"></div>
+                      </div>
+              </div><!-- /pm-pane-mgmt -->
+
+              <!-- ══ 角色权限页 ══ -->
+              <div class="pm-pane" id="pm-pane-roles">
+                <div class="pm-rp-layout">
+                  <!-- 左：角色列表 -->
+                  <div class="pm-rp-left">
+                    <div class="pm-rp-left-hd">
+                      <button class="btn btn-outline btn-sm" id="pm-add-role-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12">
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        添加角色
+                      </button>
+                    </div>
+                    <div id="pm-role-list"></div>
+                  </div>
+                  <!-- 右：权限配置 -->
+                  <div class="pm-rp-right">
+                    <div class="pm-rp-right-hd">
+                      <span class="pm-rp-role-title" id="pm-role-title">请选择角色</span>
+                      <button class="btn btn-primary btn-sm" id="pm-save-perms" disabled>保存</button>
+                    </div>
+                    <div class="pm-perm-scroll" id="pm-perm-body">
+                      <div class="pm-perm-placeholder">← 点击左侧角色，查看并配置对应权限</div>
+                    </div>
+                  </div>
+                </div>
+              </div><!-- /pm-pane-roles -->
+
+            </div><!-- /pd-panel-members -->
+
+          </div><!-- /pd-content-wrap -->
+        </div><!-- /pd-body -->
+      </div><!-- /biz-panel-project-detail -->
+
+      <!-- ══════════════════════════════════════════════════
+           账套中心视图 (data-nav="data")
+           功能：账套数据归集、双轨查账（在线/本地）管理
+           ══════════════════════════════════════════════════ -->
+      <div id="biz-panel-ledger" class="biz-panel" style="display:none;">
+
+        <!-- ── 页头：标题 + 新增按钮 ── -->
+        <div class="lc-page-header">
+          <div class="lc-title-group">
+            <h1 class="lc-page-title">账套中心</h1>
+            <p class="lc-page-desc">统一管理审计账套数据，支持在线与本地双轨查账</p>
+          </div>
+        </div>
+
+        <!-- ── 搜索 & 筛选栏 ── -->
+        <div class="lc-filter-bar">
+          <div class="lc-search-wrap">
+            <svg class="lc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input class="lc-search-input" id="lc-search" type="text" placeholder="搜索账套名称、所属公司…"/>
+          </div>
+          <div class="lc-filter-selects">
+            <select class="lc-select" id="lc-filter-period">
+              <option value="">全部账期</option>
+              <option>2025年度</option>
+              <option>2024年度</option>
+              <option>2023年度</option>
+            </select>
+            <select class="lc-select" id="lc-filter-dept">
+              <option value="">全部部门</option>
+              <option>前海五部</option>
+              <option>北京四部</option>
+              <option>上海二部</option>
+              <option>广州一部</option>
+            </select>
+            <select class="lc-select" id="lc-filter-type">
+              <option value="">全部类型</option>
+              <option value="online">在线查账</option>
+              <option value="local">本地查账</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── 数据表格 ── -->
+        <div class="lc-table-container">
+          <table class="lc-table">
+            <thead>
+              <tr>
+                <th>账套名称</th>
+                <th>所属集团公司</th>
+                <th>所属主体公司</th>
+                <th>账期</th>
+                <th>上传人</th>
+                <th>所属业务部门</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="lc-table-body">
+              <!-- 由 JS 渲染 -->
+            </tbody>
+          </table>
+          <!-- 空状态 -->
+          <div class="lc-table-empty" id="lc-table-empty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="48" height="48">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            <p>暂无账套数据</p>
+          </div>
+        </div>
+
+      </div><!-- /biz-panel-ledger -->
+
+      <!-- ══ 客户管理视图 (data-nav="customers") ══════════════════════ -->
+      <div id="biz-panel-customers" class="biz-panel" style="display:none;">
+
+        <!-- ── 页面头部 ── -->
+        <div class="cm-page-header">
+          <div class="cm-title-row">
+            <div class="cm-title-left">
+              <h2 class="cm-title">客户管理</h2>
+              <!-- 部门隔离提示徽标 -->
+              <span class="cm-dept-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                  <circle cx="12" cy="16" r="0.5" fill="currentColor"/>
+                </svg>
+                当前仅展示【审计一部】客户资产
+                    </span>
+            </div>
+            <div class="cm-actions">
+              <button class="btn btn-outline cm-btn-ghost" id="cm-btn-add-single">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                新增单体客户
+              </button>
+              <button class="btn btn-primary" id="cm-btn-batch-import">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                  <polyline points="16 16 12 12 8 16"/>
+                  <line x1="12" y1="12" x2="12" y2="21"/>
+                  <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                </svg>
+                批量导入全级次客户
+              </button>
+                  </div>
+                    </div>
+
+          <!-- ── 搜索 + 筛选栏 ── -->
+          <div class="cm-filter-bar">
+            <div class="cm-search-wrap">
+              <svg class="cm-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+              <input type="text" class="cm-search-input" id="cm-search" placeholder="搜索公司名称、股票代码…"/>
+                      </div>
+            <select class="cm-select" id="cm-filter-type">
+              <option value="">全部企业类型</option>
+              <option value="中央企业">中央企业</option>
+              <option value="国有企业">国有企业</option>
+              <option value="民营企业">民营企业</option>
+              <option value="外资企业">外资企业</option>
+            </select>
+            <select class="cm-select" id="cm-filter-listed">
+              <option value="">是否上市</option>
+              <option value="是">上市公司</option>
+              <option value="否">非上市公司</option>
+            </select>
+                    </div>
+        </div>
+
+        <!-- ── 数据表格 ── -->
+        <div class="cm-table-container">
+          <table class="cm-table">
+            <thead>
+              <tr>
+                <th>所属一级集团公司名称</th>
+                <th>公司中文名称</th>
+                <th>级次</th>
+                <th>企业类型</th>
+                <th>是否上市公司</th>
+                <th>上市板块</th>
+                <th>股票代码</th>
+                <th>客户 ID</th>
+                <th style="width:120px;text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="cm-table-body">
+              <!-- 由 JS 渲染 -->
+            </tbody>
+          </table>
+          <!-- 空状态 -->
+          <div class="cm-table-empty" id="cm-table-empty" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="44" height="44">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+            <p>未找到匹配的客户记录</p>
+                      </div>
+                    </div>
+
+        <!-- ── 分页器 ── -->
+        <div class="cm-pager-bar" id="cm-pager">
+          <!-- 由 JS 渲染 -->
+        </div>
+
+      </div><!-- /biz-panel-customers -->
+
+      <!-- ══════════════════════════════════════════════════════
+           工单中心视图 (data-nav="orders")
+           重构后 Tab：首页/工单总览/人员排期/统计报表/消息中心/交付组织/系统管理
+           ══════════════════════════════════════════════════════ -->
+      <div id="biz-panel-orders" class="biz-panel" style="display:none;">
+
+        <!-- 顶部导航栏 -->
+        <div class="gd-topbar">
+          <nav class="gd-nav">
+            <button class="gd-nav-tab active" data-gdtab="workorders">工单总览</button>
+            <button class="gd-nav-tab" data-gdtab="schedule">人员排期</button>
+            <button class="gd-nav-tab" data-gdtab="reports">统计报表</button>
+            <button class="gd-nav-tab" data-gdtab="messages">
+              消息中心<span class="gd-nav-badge" id="gd-msg-badge">3</span>
+            </button>
+            <button class="gd-nav-tab" data-gdtab="deliveryorgs">交付组织</button>
+            <button class="gd-nav-tab" data-gdtab="settings">系统管理</button>
+          </nav>
+        </div>
+
+        <!-- 内容区 -->
+        <div class="gd-body">
+          <div class="gd-pane active" id="gd-pane-workorders"></div>
+          <div class="gd-pane" id="gd-pane-schedule"></div>
+          <div class="gd-pane" id="gd-pane-reports"></div>
+          <div class="gd-pane" id="gd-pane-messages"></div>
+          <div class="gd-pane" id="gd-pane-deliveryorgs"></div>
+          <div class="gd-pane" id="gd-pane-settings"></div>
+        </div>
+
+      </div><!-- /biz-panel-orders -->
+
+      <!-- ══════════════════════════════════════════════════════
+           风控中心视图 (data-nav="riskctl")
+           Tab：送审单总览/人员排期/统计报表/消息中心/风控组织
+           ══════════════════════════════════════════════════════ -->
+      <div id="biz-panel-riskctl" class="biz-panel" style="display:none;">
+        <div class="gd-topbar rc-topbar">
+          <nav class="gd-nav rc-nav" id="rc-nav">
+            <button class="gd-nav-tab active" data-rctab="orders">送审单总览</button>
+            <button class="gd-nav-tab" data-rctab="schedule">人员排期</button>
+            <button class="gd-nav-tab" data-rctab="reports">统计报表</button>
+            <button class="gd-nav-tab" data-rctab="messages">消息中心</button>
+            <button class="gd-nav-tab" data-rctab="orgs">风控组织</button>
+          </nav>
+        </div>
+        <div class="gd-body rc-body">
+          <div class="gd-pane active" id="rc-pane-orders"></div>
+          <div class="gd-pane" id="rc-pane-schedule"></div>
+          <div class="gd-pane" id="rc-pane-reports"></div>
+          <div class="gd-pane" id="rc-pane-messages"></div>
+          <div class="gd-pane" id="rc-pane-orgs"></div>
+        </div>
+      </div><!-- /biz-panel-riskctl -->
+
+      <!-- ══════════════════════════════════════════════════════
+           系统管理模块（7个Tab：组织架构/人员管理/角色权限/模板管理/存储空间/安全管理/合规管理）
+           ══════════════════════════════════════════════════════ -->
+      <div id="biz-panel-settings" class="biz-panel" style="display:none;">
+        <div id="sm-container" style="height:100%;"></div>
+      </div><!-- /biz-panel-settings -->
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     供应商账套上传弹窗（极简版，由文件树右键触发）
+     仅包含：拖拽上传区 + 取消 + 上传
+     ════════════════════════════════════════════════════════ -->
+<div id="vendor-upload-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box vup-modal-box" role="dialog" aria-modal="true">
+
+    <!-- 头部 -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">上传账套</h2>
+        <p class="modal-subtitle" id="vup-subtitle">上传解密后的账套包</p>
+      </div>
+      <button class="modal-close-btn" id="vup-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+      </button>
+                      </div>
+
+    <!-- 上传区 -->
+    <div class="vup-body">
+      <div class="lc-upload-zone" id="vup-zone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="48" height="48">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="lc-upload-title">批量上传解密后的账套包</p>
+        <p class="lc-upload-hint">将文件拖拽到此处，或 <span class="lc-upload-link" id="vup-select-file">点击选择文件</span></p>
+        <p class="lc-upload-formats">支持 .zip .rar .7z 格式，单次最多 20 个文件</p>
+        <input type="file" id="vup-file-input" multiple accept=".zip,.rar,.7z" style="display:none;"/>
+                    </div>
+      <!-- 已选文件列表 -->
+      <div class="lc-file-list" id="vup-file-list"></div>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="vup-cancel">取消</button>
+      <button class="btn btn-primary" id="vup-upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+        上传
+      </button>
+                      </div>
+
+                    </div>
+                  </div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     工作区详情 — 账套关联 Modal
+     功能：展示当前集团下可用账套，勾选后自动生成文件树节点
+     ════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════
+     工作区 — 账套关联弹窗（双面板多对多关联 v2）
+     左：所属公司列表；右：勾选关联账套
+     ════════════════════════════════════════════════════════ -->
+<div id="ws-ledger-assoc-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box la-modal-box" role="dialog" aria-modal="true">
+
+    <!-- ── 头部 ── -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">账套关联</h2>
+        <p class="modal-subtitle" id="la-modal-subtitle">加载中…</p>
+      </div>
+      <button class="modal-close-btn" id="la-modal-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+                </div>
+
+    <!-- ── 双面板主体 ── -->
+    <div class="la-body">
+
+      <!-- 左：公司列表 -->
+      <div class="la-left-panel">
+        <div class="la-panel-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="13" height="13">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+          所属公司
+                  </div>
+        <div class="la-company-list" id="la-company-list">
+          <!-- 由 JS 渲染 -->
+        </div>
+                </div>
+
+      <!-- 分隔线 -->
+      <div class="la-panel-divider"></div>
+
+      <!-- 右：账套勾选 -->
+      <div class="la-right-panel">
+        <div class="la-panel-hd" id="la-ledger-panel-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="13" height="13">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span id="la-ledger-panel-title">请先在左侧选择公司</span>
+        </div>
+        <div class="la-ledger-list" id="la-ledger-list">
+          <!-- 由 JS 渲染 -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── 底部按钮 ── -->
+    <div class="modal-footer la-footer">
+      <span class="la-change-hint" id="la-change-hint"></span>
+      <button class="btn btn-outline" id="la-modal-cancel">取消</button>
+      <button class="btn btn-primary" id="la-modal-confirm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        确认
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     客户管理 — 新增单体客户 Modal
+     ════════════════════════════════════════════════════════ -->
+<div id="cm-add-customer-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box cac-modal-box" role="dialog" aria-modal="true">
+
+    <!-- ── 头部 ── -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">新增客户信息</h2>
+        <p class="modal-subtitle">填写客户基本资料，系统将自动生成唯一客户 ID</p>
+      </div>
+      <button class="modal-close-btn" id="cac-modal-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── 表单主体 ── -->
+    <div class="cac-form-body">
+
+      <!-- 所属一级集团公司名称（可搜索已有 + 可新增） -->
+      <div class="cac-field">
+        <label class="cac-label" for="cac-group">所属一级集团公司名称 <span class="cac-req">*</span></label>
+        <div class="cac-ac-wrap" id="cac-group-wrap">
+          <input type="text" class="cac-input" id="cac-group" placeholder="请输入集团公司全称，可搜索已有或填写新名称" autocomplete="off"/>
+          <div class="cac-ac-dropdown" id="cac-group-dropdown"></div>
+        </div>
+      </div>
+
+      <!-- 公司中文名称 -->
+      <div class="cac-field">
+        <label class="cac-label" for="cac-name">公司中文名称 <span class="cac-req">*</span></label>
+        <input type="text" class="cac-input" id="cac-name"
+          placeholder="请输入与工商注册/交易所/证监会一致的标准全称，注意区分中英文括号"/>
+      </div>
+
+      <!-- 级次（可选）-->
+      <div class="cac-field">
+        <label class="cac-label" for="cac-level">级次</label>
+        <input type="number" class="cac-input" id="cac-level" placeholder="请输入整数（如：1、2、3）" min="1" step="1"/>
+        <p class="cac-field-hint">填写公司在集团架构中的层级，1 为最高级，可不填</p>
+      </div>
+
+      <!-- 企业类型 -->
+      <div class="cac-field">
+        <label class="cac-label" for="cac-type">企业类型 <span class="cac-req">*</span></label>
+        <select class="cac-select" id="cac-type">
+          <option value="">请选择企业类型</option>
+          <option value="中央企业">中央企业</option>
+          <option value="地方国资">地方国资</option>
+          <option value="民营企业">民营企业</option>
+          <option value="外资企业">外资企业</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+
+      <!-- 是否上市公司 -->
+      <div class="cac-field">
+        <label class="cac-label">是否上市公司 <span class="cac-req">*</span></label>
+        <p class="cac-field-hint">仅上市公司主体选择「是」，上市公司子公司选择「否」</p>
+        <div class="cac-radio-group" id="cac-listed-group">
+          <label class="cac-radio-card" id="cac-radio-no">
+            <input type="radio" name="cac-listed" value="否" checked/>
+            <div class="cac-radio-inner">
+              <span class="cac-radio-dot"></span>
+              <span class="cac-radio-text">否</span>
+            </div>
+          </label>
+          <label class="cac-radio-card" id="cac-radio-yes">
+            <input type="radio" name="cac-listed" value="是"/>
+            <div class="cac-radio-inner">
+              <span class="cac-radio-dot"></span>
+              <span class="cac-radio-text">是</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 动态块：上市板块 + 股票代码（仅选「是」时显示） -->
+      <div id="cac-listed-extra" class="cac-listed-extra" style="display:none;">
+
+        <!-- 上市板块（多级多选） -->
+        <div class="cac-field">
+          <label class="cac-label">上市板块 <span class="cac-req">*</span></label>
+          <p class="cac-field-hint">可同时勾选多个市场（如 A 股主板 + H 股）</p>
+          <!-- 自定义多级多选下拉 -->
+          <div class="cac-exc-wrap" id="cac-exc-wrap">
+            <div class="cac-exc-trigger" id="cac-exc-trigger" tabindex="0">
+              <div class="cac-exc-tags" id="cac-exc-tags">
+                <span class="cac-exc-placeholder" id="cac-exc-placeholder">请选择上市板块（可多选）</span>
+              </div>
+              <svg class="cac-exc-arrow" id="cac-exc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+            <div class="cac-exc-dropdown" id="cac-exc-dropdown">
+              <!-- 由 JS 渲染 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 股票代码 -->
+        <div class="cac-field">
+          <label class="cac-label" for="cac-ticker">股票代码 <span class="cac-req">*</span></label>
+          <input type="text" class="cac-input" id="cac-ticker"
+            placeholder="如：600028 或 9988.HK，多个代码请用英文逗号分隔"/>
+        </div>
+
+      </div>
+
+    </div><!-- /cac-form-body -->
+
+    <!-- ── 底部按钮 ── -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cac-modal-cancel">取消</button>
+      <button class="btn btn-primary" id="cac-modal-save">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        保存
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     客户管理 — 批量导入全级次客户 Modal
+     View 1: 下载模板 + 拖拽上传
+     View 2: 导入结果反馈
+     ════════════════════════════════════════════════════════ -->
+<div id="cm-batch-import-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box cbi-modal-box" role="dialog" aria-modal="true">
+
+    <!-- ── 头部（两个视图共用） ── -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="cbi-modal-title">批量导入客户清单</h2>
+        <p class="modal-subtitle" id="cbi-modal-subtitle">支持一次性导入集团全级次客户主体</p>
+      </div>
+      <button class="modal-close-btn" id="cbi-modal-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ════ View 1：上传 ════ -->
+    <div id="cbi-view-upload">
+
+      <!-- 下载模板区 -->
+      <div class="cbi-template-section">
+        <a class="cbi-template-link" id="cbi-download-tpl" href="#" download>
+          <!-- Excel 图标 -->
+          <svg class="cbi-excel-icon" viewBox="0 0 32 32" fill="none" width="28" height="28">
+            <rect width="32" height="32" rx="6" fill="#1D6F42"/>
+            <path d="M8 8h8v2.5H8zM8 11.5h8V14H8zM8 15h8v2.5H8zM8 18.5h8V21H8z" fill="rgba(255,255,255,0.3)"/>
+            <path d="M10.5 9.5l3.5 6-3.5 6h2.5l2-4 2 4H20l-3.5-6 3.5-6h-2.5l-2 4-2-4z" fill="#fff"/>
+            <rect x="17" y="8" width="7" height="2.5" rx="0.5" fill="rgba(255,255,255,0.6)"/>
+            <rect x="17" y="11.8" width="7" height="2.5" rx="0.5" fill="rgba(255,255,255,0.6)"/>
+            <rect x="17" y="15.5" width="7" height="2.5" rx="0.5" fill="rgba(255,255,255,0.6)"/>
+            <rect x="17" y="19.3" width="7" height="2.5" rx="0.5" fill="rgba(255,255,255,0.6)"/>
+          </svg>
+          <div class="cbi-template-text">
+            <span class="cbi-template-name">下载 标准客户导入模板.xlsx</span>
+            <span class="cbi-template-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+                        </span>
+          </div>
+        </a>
+        <p class="cbi-template-hint">模板包含：所属集团公司名称、公司中文名称、级次、企业类型、是否上市公司、上市板块、股票代码。请严格按照模板格式填写，支持最多同时导入 500 条数据。</p>
+      </div>
+
+      <!-- 拖拽上传区 -->
+      <div class="cbi-dropzone" id="cbi-dropzone">
+        <input type="file" id="cbi-file-input" accept=".xls,.xlsx,.csv" style="display:none;"/>
+
+        <!-- 默认状态 -->
+        <div class="cbi-dz-idle" id="cbi-dz-idle">
+          <div class="cbi-dz-cloud">
+            <svg viewBox="0 0 64 48" fill="none" width="64" height="48">
+              <!-- 云朵主体 -->
+              <path d="M50 34H14a12 12 0 0 1 0-24 11.9 11.9 0 0 1 5.3 1.2A15 15 0 0 1 48 18.5a10 10 0 0 1 2 19.5z" fill="url(#cloud-grad)" opacity="0.9"/>
+              <!-- 向下箭头 -->
+              <polyline points="32 20 32 36 26 30" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="32 36 38 30" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="cloud-grad" x1="14" y1="10" x2="52" y2="38" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#E0E7FF"/>
+                  <stop offset="100%" stop-color="#C7D2FE"/>
+                </linearGradient>
+              </defs>
+                        </svg>
+                      </div>
+          <p class="cbi-dz-main">点击或将文件拖拽到这里上传</p>
+          <p class="cbi-dz-sub">支持 <span>.xls</span> <span>.xlsx</span> <span>.csv</span> 格式，单文件不超过 10 MB</p>
+          <button class="cbi-dz-btn" id="cbi-dz-btn">选择文件</button>
+                </div>
+
+        <!-- 文件已选中状态 -->
+        <div class="cbi-dz-selected" id="cbi-dz-selected" style="display:none;">
+          <div class="cbi-file-card">
+            <div class="cbi-file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="22" height="22">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                              <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                          </div>
+            <div class="cbi-file-meta">
+              <span class="cbi-file-name" id="cbi-file-name">—</span>
+              <span class="cbi-file-size" id="cbi-file-size">—</span>
+                        </div>
+            <button class="cbi-file-remove" id="cbi-file-remove" title="移除">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+                      </div>
+
+          <!-- 进度条 -->
+          <div class="cbi-progress-wrap" id="cbi-progress-wrap">
+            <div class="cbi-progress-header">
+              <span class="cbi-progress-label" id="cbi-progress-label">正在解析文件…</span>
+              <span class="cbi-progress-pct" id="cbi-progress-pct">0%</span>
+                    </div>
+            <div class="cbi-progress-track">
+              <div class="cbi-progress-bar" id="cbi-progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /cbi-dropzone -->
+
+    </div><!-- /cbi-view-upload -->
+
+    <!-- ════ View 2：结果反馈 ════ -->
+    <div id="cbi-view-result" style="display:none;">
+      <div class="cbi-result-body">
+
+        <!-- 成功图标 -->
+        <div class="cbi-result-icon">
+          <svg viewBox="0 0 48 48" fill="none" width="56" height="56">
+            <circle cx="24" cy="24" r="22" fill="rgba(16,185,129,0.1)" stroke="#10B981" stroke-width="2"/>
+            <polyline points="14 24 21 31 34 17" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+
+        <!-- 统计卡片 -->
+        <div class="cbi-result-stats">
+          <div class="cbi-stat-card cbi-stat-success">
+            <span class="cbi-stat-num">298</span>
+            <span class="cbi-stat-label">成功导入</span>
+                    </div>
+          <div class="cbi-stat-divider"></div>
+          <div class="cbi-stat-card cbi-stat-fail">
+            <span class="cbi-stat-num">2</span>
+            <span class="cbi-stat-label">导入失败</span>
+          </div>
+        </div>
+
+        <!-- 失败提示 + 下载按钮 -->
+        <div class="cbi-result-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="14" height="14">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+            <circle cx="12" cy="16" r="0.5" fill="currentColor"/>
+                        </svg>
+          2 条记录因格式错误未能导入，可下载明细核对修改后重新上传
+                      </div>
+
+        <a class="cbi-download-fail-btn" href="#" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+          下载失败明细
+        </a>
+
+                    </div>
+    </div><!-- /cbi-view-result -->
+
+    <!-- ── 底部按钮 ── -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cbi-modal-cancel">取消</button>
+      <button class="btn btn-primary" id="cbi-modal-import" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                        </svg>
+        开始导入
+            </button>
+                      </div>
+
+                    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     新建工作区 — 分步弹窗 Modal
+     Step 1: 工作区类型选择
+     Step 2: 基础信息填写
+     ════════════════════════════════════════════════════════ -->
+<div id="ws-create-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box" role="dialog" aria-labelledby="ws-modal-title" aria-modal="true">
+
+    <!-- ── 弹窗头部 ── -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="ws-modal-title">新建工作区</h2>
+        <p class="modal-subtitle" id="ws-modal-subtitle">选择工作区类型，开始创建</p>
+      </div>
+      <button class="modal-close-btn" id="ws-modal-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+            </button>
+                      </div>
+
+    <!-- ── 步骤进度条 ── -->
+    <div class="modal-stepper">
+      <div class="step-item active" data-step="1">
+        <div class="step-circle">
+          <span class="step-num">1</span>
+          <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+                    </div>
+        <span class="step-label">选择类型</span>
+      </div>
+      <div class="step-connector" data-conn="1"></div>
+      <div class="step-item" data-step="2">
+        <div class="step-circle">
+          <span class="step-num">2</span>
+          <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13">
+            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+        <span class="step-label">填写信息</span>
+                    </div>
+      <div class="step-connector" data-conn="2"></div>
+      <div class="step-item" data-step="3">
+        <div class="step-circle">
+          <span class="step-num">3</span>
+          <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <span class="step-label">总所关联</span>
+                  </div>
+                </div>
+
+    <!-- ── 弹窗内容区（可滚动）── -->
+    <div class="modal-body">
+
+      <!-- ╔══ Step 1：工作区类型选择 ══╗ -->
+      <div class="step-panel" id="ws-step-1">
+        <div class="ws-type-grid">
+
+          <!-- 项目工作区 -->
+          <div class="ws-type-card" data-type="project">
+            <div class="ws-type-icon">
+              <svg viewBox="0 0 44 44" fill="none" width="36" height="36">
+                <rect x="2" y="6" width="40" height="32" rx="4" fill="#EEF2FF"/>
+                <path d="M2 16C2 13.79 3.79 12 6 12H17L21 16H38C40.21 16 42 17.79 42 20V34C42 36.21 40.21 38 38 38H6C3.79 38 2 36.21 2 34V16Z" fill="#6366F1"/>
+                <path d="M22 24l3.5 3.5 7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+            <div class="ws-type-body">
+              <h3>项目工作区</h3>
+              <p>正式审计项目，支持交付工单、函证制发、送审复核等完整业务流程</p>
+              <div class="ws-type-tags">
+                <span>可送审</span><span>可发起函证</span><span>可关联账套</span>
+              </div>
+            </div>
+            <div class="ws-type-radio"></div>
+                </div>
+
+          <!-- 非项目工作区 -->
+          <div class="ws-type-card" data-type="non-project">
+            <div class="ws-type-icon">
+              <svg viewBox="0 0 44 44" fill="none" width="36" height="36">
+                <rect x="2" y="6" width="40" height="32" rx="4" fill="#F1F5F9"/>
+                <path d="M2 16C2 13.79 3.79 12 6 12H17L21 16H38C40.21 16 42 17.79 42 20V34C42 36.21 40.21 38 38 38H6C3.79 38 2 36.21 2 34V16Z" fill="#94A3B8"/>
+                <rect x="17" y="24" width="10" height="2" rx="1" fill="white" opacity="0.7"/>
+                <rect x="17" y="29" width="7" height="2" rx="1" fill="white" opacity="0.5"/>
+                    </svg>
+                  </div>
+            <div class="ws-type-body">
+              <h3>非项目工作区</h3>
+              <p>临时存储与练习用途，资料仅供内部参考，不支持送审、函证等核心业务流程</p>
+              <div class="ws-type-tags">
+                <span class="tag-muted">不可送审</span><span>灵活建档</span><span>临时协作</span>
+                </div>
+              </div>
+            <div class="ws-type-radio"></div>
+            </div>
+
+          </div>
+        </div>
+      <!-- ╚══ /Step 1 ══╝ -->
+
+      <!-- ╔══ Step 2：基础信息填写 ══╗ -->
+      <div class="step-panel" id="ws-step-2" style="display:none;">
+
+        <!-- 工作区名称预览（实时自动生成）-->
+        <div class="ws-autoname-preview">
+          <div class="ws-autoname-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            工作区名称（自动生成）
+          </div>
+          <div class="ws-autoname-value" id="ws-auto-name">请填写下方信息以自动生成名称</div>
+        </div>
+
+        <!-- 表单网格 -->
+        <div class="ws-form-grid">
+
+          <!-- 公司名称（必填，联动所属集团）-->
+          <div class="ws-form-field ws-field-full">
+            <label class="ws-field-label">公司名称 <span class="ws-required">*</span></label>
+            <select class="ws-select" id="ws-form-entity">
+              <option value="">请选择公司名称（从客户库中选择）…</option>
+              <!-- 由 JS 从 CUSTOMER_DATA 动态填充 -->
+            </select>
+          </div>
+
+          <!-- 所属集团（必填，可搜索）-->
+          <div class="ws-form-field ws-field-full">
+            <label class="ws-field-label">所属集团 <span class="ws-required">*</span></label>
+            <div class="custom-select-wrap" id="ss-group" data-target="ws-form-group" data-autoname="true">
+              <div class="css-trigger">
+                <span class="css-placeholder">请选择或搜索集团公司…</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14" class="css-arrow"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="css-dropdown">
+                <div class="css-search-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" class="css-filter" placeholder="搜索…" autocomplete="off">
+                </div>
+                <div class="css-options">
+                  <div class="css-option" data-value="中国比亚迪">中国比亚迪</div>
+                  <div class="css-option" data-value="中国石化集团">中国石化集团</div>
+                  <div class="css-option" data-value="华为技术有限公司">华为技术有限公司</div>
+                  <div class="css-option" data-value="阿里巴巴集团">阿里巴巴集团</div>
+                  <div class="css-option" data-value="万科企业股份有限公司">万科企业股份有限公司</div>
+                  <div class="css-option" data-value="比亚迪股份有限公司">比亚迪股份有限公司</div>
+                  <div class="css-option" data-value="中国建筑集团">中国建筑集团</div>
+                  <div class="css-option" data-value="中国移动通信集团">中国移动通信集团</div>
+                  <div class="css-option" data-value="腾讯控股有限公司">腾讯控股有限公司</div>
+                  <div class="css-option" data-value="宁德时代新能源科技">宁德时代新能源科技</div>
+                </div>
+              </div>
+              <input type="hidden" id="ws-form-group">
+            </div>
+          </div>
+
+          <!-- 业务类型（必填）-->
+          <div class="ws-form-field">
+            <label class="ws-field-label">业务类型 <span class="ws-required">*</span></label>
+            <select class="ws-select" id="ws-form-biztype" data-autoname="true">
+              <option value="">请选择业务类型</option>
+              <option value="年报审计">年报审计</option>
+              <option value="IPO审计">IPO审计</option>
+              <option value="专项审计">专项审计</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <!-- 项目年度（必填）-->
+          <div class="ws-form-field">
+            <label class="ws-field-label">项目年度 <span class="ws-required">*</span></label>
+            <select class="ws-select" id="ws-form-year" data-autoname="true">
+              <option value="">请选择项目年度</option>
+              <option value="2026">2026 年</option>
+              <option value="2025">2025 年</option>
+              <option value="2024">2024 年</option>
+              <option value="2023">2023 年</option>
+            </select>
+          </div>
+
+          <!-- 审计期间（必填，日期区间）-->
+          <div class="ws-form-field ws-field-full">
+            <label class="ws-field-label">审计期间 <span class="ws-required">*</span></label>
+            <div class="ws-date-range">
+              <input type="date" class="ws-date-input" id="ws-form-period-start">
+              <span class="ws-date-sep">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </span>
+              <input type="date" class="ws-date-input" id="ws-form-period-end">
+            </div>
+          </div>
+
+          <!-- 项目负责人（必填，可搜索）-->
+          <div class="ws-form-field">
+            <label class="ws-field-label">项目负责人 <span class="ws-required">*</span></label>
+            <div class="custom-select-wrap" id="ss-manager" data-target="ws-form-manager">
+              <div class="css-trigger">
+                <span class="css-placeholder">请选择或搜索负责人…</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14" class="css-arrow"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="css-dropdown">
+                <div class="css-search-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" class="css-filter" placeholder="搜索负责人…" autocomplete="off">
+                </div>
+                <div class="css-options" id="ss-manager-options">
+                  <!-- 由 JS 从 WS_ALL_STAFF 动态渲染 -->
+                </div>
+              </div>
+              <input type="hidden" id="ws-form-manager">
+            </div>
+          </div>
+
+          <!-- 工作区所属部门（必填，可搜索）-->
+          <div class="ws-form-field">
+            <label class="ws-field-label">工作区所属部门 <span class="ws-required">*</span></label>
+            <div class="custom-select-wrap" id="ss-dept" data-target="ws-form-dept" data-autoname="true">
+              <div class="css-trigger">
+                <span class="css-placeholder">请选择或搜索部门…</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14" class="css-arrow"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="css-dropdown">
+                <div class="css-search-row">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" class="css-filter" placeholder="搜索部门…" autocomplete="off">
+                </div>
+                <div class="css-options">
+                  <div class="css-option" data-value="审计一部">审计一部</div>
+                  <div class="css-option" data-value="审计二部">审计二部</div>
+                  <div class="css-option" data-value="审计三部">审计三部</div>
+                  <div class="css-option" data-value="审计四部">审计四部</div>
+                  <div class="css-option" data-value="前海五部">前海五部</div>
+                  <div class="css-option" data-value="北京四部">北京四部</div>
+                  <div class="css-option" data-value="风控中心">风控中心</div>
+                </div>
+              </div>
+              <input type="hidden" id="ws-form-dept">
+            </div>
+          </div>
+
+        </div><!-- /ws-form-grid -->
+      </div>
+      <!-- ╚══ /Step 2 ══╝ -->
+
+      <!-- ╔══ Step 3：总所关联（可选步骤）══╗ -->
+      <div class="step-panel" id="ws-step-3" style="display:none;">
+
+        <!-- 可选提示 -->
+        <div class="ws-s3-tip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+          <span>此步骤为<strong>可选项</strong>，可直接点击「确认创建」跳过。如需绑定总所项目集合清单，请下载模板填写后上传。</span>
+        </div>
+
+        <!-- 下载模板 -->
+        <div class="ws-tpl-download" id="ws-tpl-download-btn">
+          <div class="ws-tpl-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <rect width="24" height="24" rx="4" fill="#1A7F4A"/>
+              <text x="12" y="16.5" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="sans-serif">XLS</text>
+            </svg>
+          </div>
+          <span class="ws-tpl-name">下载 《总所关联示例文件.csv》</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16" class="ws-tpl-dl-icon">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+
+        <!-- 提示文字 -->
+        <p class="ws-upload-desc">模板包含：属于该生产工作区的公司名称、财务报表类型、公司名称对应的总所项目编号、总所项目负责人。请严格按照模板格式填写。</p>
+
+        <!-- 拖拽上传区 -->
+        <div class="ws-upload-zone" id="ws-upload-zone">
+          <!-- 云形图标 -->
+          <div class="ws-upload-cloud">
+            <svg viewBox="0 0 64 48" fill="none" width="64" height="48">
+              <ellipse cx="32" cy="30" rx="28" ry="16" fill="#DDE8FF"/>
+              <ellipse cx="18" cy="28" rx="14" ry="10" fill="#C7D9FF"/>
+              <ellipse cx="44" cy="26" rx="12" ry="9" fill="#C7D9FF"/>
+              <ellipse cx="32" cy="22" rx="20" ry="14" fill="#E8F0FF"/>
+            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" width="24" height="24" class="ws-upload-arrow">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <p class="ws-upload-main-text">点击或将文件拖拽到这里上传</p>
+          <p class="ws-upload-format-text">
+            支持 <span class="ws-fmt-tag">.xls</span> <span class="ws-fmt-tag">.xlsx</span> <span class="ws-fmt-tag">.csv</span> 格式，单文件不超过 10 MB
+          </p>
+          <button type="button" class="ws-upload-select-btn" id="ws-upload-select-btn">选择文件</button>
+          <input type="file" id="ws-upload-input" accept=".xls,.xlsx,.csv" style="display:none;">
+        </div>
+
+        <!-- 已选文件显示（初始隐藏）-->
+        <div class="ws-uploaded-file" id="ws-uploaded-file" style="display:none;">
+          <div class="ws-uploaded-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1A7F4A" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="ws-uploaded-name" style="font-size:0.84rem;color:#111827;"></span>
+          </div>
+          <button type="button" class="ws-remove-file-btn" id="ws-remove-file-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          </div>
+      <!-- ╚══ /Step 3 ══╝ -->
+
+    </div><!-- /modal-body -->
+
+    <!-- ── 弹窗底部导航 ── -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="ws-modal-cancel">取消</button>
+      <div class="modal-footer-nav">
+        <button class="btn btn-outline" id="ws-btn-prev" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          上一步
+        </button>
+        <button class="btn btn-primary" id="ws-btn-next">
+          下一步
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="btn btn-primary" id="ws-btn-submit" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+          确认创建
+        </button>
+            </div>
+          </div>
+
+  </div><!-- /modal-box -->
+</div><!-- /modal-backdrop -->
+
+<!-- ══ 工作区详情弹窗（只读）══ -->
+<div class="modal-backdrop" id="ws-detail-modal" aria-hidden="true">
+  <div class="ws-detail-box">
+
+    <!-- 弹窗头部 -->
+    <div class="ws-detail-header">
+      <div class="ws-detail-title-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+        <div>
+          <h2 class="ws-detail-title">工作区详情</h2>
+          <p class="ws-detail-subtitle" id="wd-ws-name">—</p>
+        </div>
+      </div>
+      <button class="modal-close-btn" id="ws-detail-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+            </button>
+        </div>
+
+    <!-- 弹窗内容 -->
+    <div class="ws-detail-body">
+
+      <!-- ── Part 1：基础信息 ── -->
+      <div class="ws-detail-section">
+        <div class="ws-detail-section-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+          基础信息
+      </div>
+        <div class="ws-detail-grid">
+          <!-- 行1：公司名称（全宽） -->
+          <div class="ws-detail-item ws-detail-item-full">
+            <span class="ws-detail-label">公司名称</span>
+            <span class="ws-detail-value ws-detail-val-primary" id="wd-entity">—</span>
+          </div>
+          <!-- 行2：集团 | 业务类型 -->
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">所属集团</span>
+            <span class="ws-detail-value" id="wd-group">—</span>
+          </div>
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">业务类型</span>
+            <span class="ws-detail-value" id="wd-biztype">—</span>
+          </div>
+          <!-- 行3：审计期间开始 | 结束 -->
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">审计期间（开始）</span>
+            <span class="ws-detail-value ws-detail-val-date" id="wd-period-start">—</span>
+          </div>
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">审计期间（结束）</span>
+            <span class="ws-detail-value ws-detail-val-date" id="wd-period-end">—</span>
+          </div>
+          <!-- 行4：项目年度 | 所属部门 -->
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">项目年度</span>
+            <span class="ws-detail-value" id="wd-year">—</span>
+          </div>
+          <div class="ws-detail-item">
+            <span class="ws-detail-label">所属部门</span>
+            <span class="ws-detail-value" id="wd-dept">—</span>
+          </div>
+          <!-- 行5：项目负责人（全宽，居末）-->
+          <div class="ws-detail-item ws-detail-item-full">
+            <span class="ws-detail-label">项目负责人</span>
+            <span class="ws-detail-value" id="wd-manager">—</span>
+          </div>
+    </div>
+  </div>
+
+      <!-- ── Part 2：所属总所项目集合清单绑定 ── -->
+      <div class="ws-detail-section">
+        <div class="ws-detail-section-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13">
+            <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          所属总所项目集合清单绑定
+          <!-- 右侧：更新绑定文件按钮 -->
+          <button type="button" class="wd-update-binding-btn" id="wd-update-binding-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            更新绑定文件
+            </button>
+        </div>
+        <!-- JS 动态填充绑定列表表格 -->
+        <div id="wd-binding-list"></div>
+          </div>
+
+      <!-- 更新绑定文件 — 内嵌迷你上传面板（初始隐藏） -->
+      <div class="wd-upload-panel" id="wd-upload-panel" style="display:none;">
+        <div class="wd-upload-panel-inner">
+          <!-- 下载模板 -->
+          <div class="wd-tpl-row" id="wd-tpl-btn">
+            <svg viewBox="0 0 24 24" width="15" height="15">
+              <rect width="24" height="24" rx="4" fill="#1A7F4A"/>
+              <text x="12" y="16.5" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="sans-serif">XLS</text>
+            </svg>
+            <span>下载 《项目作业区与所属总所项目集合清单绑定.xlsx》</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <!-- 上传区 -->
+          <div class="wd-drop-zone" id="wd-drop-zone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2" stroke-linecap="round" width="22" height="22"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="wd-drop-text">点击或将文件拖拽到此处</span>
+            <span class="wd-drop-fmt">支持 .xls .xlsx .csv，不超过 10 MB</span>
+            <input type="file" id="wd-file-input" accept=".xls,.xlsx,.csv" style="display:none;">
+          </div>
+          <!-- 已选文件 -->
+          <div class="wd-selected-file" id="wd-selected-file" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1A7F4A" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="wd-selected-name" style="font-size:0.82rem;flex:1;color:#111827;"></span>
+            <button type="button" class="wd-remove-sel" id="wd-remove-sel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <!-- 操作按钮行 -->
+          <div class="wd-upload-actions">
+            <button type="button" class="btn btn-outline wd-cancel-upload" id="wd-cancel-upload">取消</button>
+            <button type="button" class="btn btn-primary wd-confirm-upload" id="wd-confirm-upload">确认更新</button>
+          </div>
+        </div>
+          </div>
+
+    </div><!-- /ws-detail-body -->
+
+  </div><!-- /ws-detail-box -->
+</div><!-- /ws-detail-modal -->
+
+<!-- 工单详情抽屉（全局复用：项目工作区 / 工单中心） -->
+<div class="gd-drawer-overlay" id="gd-drawer-overlay" onclick="gdCloseDetail()"></div>
+<div class="gd-detail-drawer" id="gd-detail-drawer">
+  <div class="gd-drawer-2col">
+    <!-- 左列：基础信息 + 操作区 -->
+    <div class="gd-drawer-left" id="gd-drawer-left"></div>
+    <!-- 右列：四 Tab -->
+    <div class="gd-drawer-right">
+      <div class="gd-itabs" id="gd-drawer-itabs">
+        <button class="gd-itab active" data-itab="logs">操作日志</button>
+        <button class="gd-itab" data-itab="req">需求方上传区</button>
+        <button class="gd-itab" data-itab="svc">服务方上传区</button>
+        <button class="gd-itab" data-itab="chat">日常沟通</button>
+      </div>
+      <div class="gd-itab-content" id="gd-itab-content"></div>
+            </div>
+          </div>
+        </div>
+
+<!-- 工单中心通用弹窗（全局复用：项目工作区 / 工单中心） -->
+<div class="modal-backdrop" id="gd-dispatch-modal" aria-hidden="true">
+  <div class="modal-box" style="width:500px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">派单</h2>
+        <p class="modal-subtitle">为工单分配服务方处理人</p>
+      </div>
+      <button class="modal-close-btn" onclick="gdCloseDispatch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="gd-dispatch-body" style="padding:16px 24px;flex:1;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="gdCloseDispatch()">取消</button>
+      <button class="btn btn-primary" onclick="gdConfirmDispatch()">确认派单</button>
+    </div>
+    </div>
+  </div>
+
+<div class="modal-backdrop" id="gd-reject-modal2" aria-hidden="true">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="gd-reject-title2">驳回工单</h2>
+        <p class="modal-subtitle">填写驳回原因，服务方将收到通知</p>
+      </div>
+      <button class="modal-close-btn" onclick="gdCloseRejectDrawer()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:20px 24px;">
+      <label style="font-size:0.84rem;font-weight:500;color:#374151;display:block;margin-bottom:6px;">
+        驳回原因 <span style="color:#EF4444;">*</span>
+      </label>
+      <textarea id="gd-reject-reason2" rows="4"
+        style="width:100%;box-sizing:border-box;resize:vertical;border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;font-size:0.84rem;font-family:inherit;outline:none;line-height:1.5;"
+        placeholder="请详细描述驳回原因，以便服务方修改"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="gdCloseRejectDrawer()">取消</button>
+      <button class="btn btn-primary" style="background:#EF4444;" onclick="gdConfirmRejectDrawer()">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="gd-submit-modal" aria-hidden="true">
+  <div class="modal-box" style="width:520px;">
+    <div class="modal-header">
+      <div><h2 class="modal-title">提交工单</h2><p class="modal-subtitle">填写工单信息并提交至交付中心</p></div>
+      <button class="modal-close-btn" onclick="gdCloseSubmit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="gd-submit-body" style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="gdCloseSubmit()">取消</button>
+      <button class="btn btn-primary" id="gd-submit-confirm">提交工单</button>
+    </div>
+  </div>
+</div>
+
+<!-- 右键菜单（由 JS 动态填充内容） -->
+<div id="context-menu" class="context-menu"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     项目成员 — 弹窗组
+     ════════════════════════════════════════════════════════ -->
+
+<!-- 添加成员 -->
+<div class="modal-backdrop" id="pm-modal-add" aria-hidden="true">
+  <div class="modal-box pm-modal-box">
+    <div class="modal-header">
+      <div><h2 class="modal-title">添加成员</h2><p class="modal-subtitle">搜索并选择要添加的成员</p></div>
+      <button class="modal-close-btn" data-pmclose="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-row">
+        <label class="pm-label">成员姓名 <span class="pm-req">*</span></label>
+        <input class="pm-input" id="pm-add-name" type="text" placeholder="输入姓名搜索…"/>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">分配角色 <span class="pm-req">*</span></label>
+        <select class="pm-select" id="pm-add-role"></select>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">所属部门</label>
+        <select class="pm-select" id="pm-add-dept">
+          <option value="">请选择</option>
+          <option>审计一部</option><option>审计二部</option><option>审计三部</option><option>质控中心</option>
+        </select>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">职位 <span class="pm-req">*</span></label>
+        <select class="pm-select" id="pm-add-pos">
+          <option value="">请选择</option>
+          <option>部门负责人</option><option>正式员工</option><option>部门行政秘书</option><option>实习生</option>
+        </select>
+      </div>
+      <div class="pm-form-row pm-validity-row" id="pm-add-validity-row" style="display:none;">
+        <label class="pm-label">有效期 <span class="pm-req">*</span></label>
+        <input class="pm-input" id="pm-add-validity" type="date"/>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">手机号码</label>
+        <input class="pm-input" id="pm-add-phone" type="text" placeholder="138****0000"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-pmclose="add">取消</button>
+      <button class="btn btn-primary" id="pm-add-confirm">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑成员 -->
+<div class="modal-backdrop" id="pm-modal-edit" aria-hidden="true">
+  <div class="modal-box pm-modal-box">
+    <div class="modal-header">
+      <div><h2 class="modal-title">编辑成员</h2><p class="modal-subtitle" id="pm-edit-subtitle">修改成员信息</p></div>
+      <button class="modal-close-btn" data-pmclose="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pm-edit-id"/>
+      <div class="pm-form-row">
+        <label class="pm-label">分配角色 <span class="pm-req">*</span></label>
+        <select class="pm-select" id="pm-edit-role"></select>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">所属部门</label>
+        <select class="pm-select" id="pm-edit-dept">
+          <option value="">请选择</option>
+          <option>审计一部</option><option>审计二部</option><option>审计三部</option><option>质控中心</option>
+        </select>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">职位 <span class="pm-req">*</span></label>
+        <select class="pm-select" id="pm-edit-pos">
+          <option value="">请选择</option>
+          <option>部门负责人</option><option>正式员工</option><option>部门行政秘书</option><option>实习生</option>
+        </select>
+      </div>
+      <div class="pm-form-row pm-validity-row" id="pm-edit-validity-row" style="display:none;">
+        <label class="pm-label">有效期 <span class="pm-req">*</span></label>
+        <input class="pm-input" id="pm-edit-validity" type="date"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-pmclose="edit">取消</button>
+      <button class="btn btn-primary" id="pm-edit-confirm">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 移除确认 -->
+<div class="modal-backdrop" id="pm-modal-remove" aria-hidden="true">
+  <div class="modal-box pm-modal-sm-box">
+    <div class="pm-remove-body">
+      <div class="pm-remove-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="28" height="28"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+      </div>
+      <h3 class="pm-remove-title">确认移除成员？</h3>
+      <p class="pm-remove-desc">将移除 <strong id="pm-remove-name"></strong>，该成员将失去项目访问权限。</p>
+      <input type="hidden" id="pm-remove-id"/>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:12px;">
+      <button class="btn btn-outline" data-pmclose="remove">取消</button>
+      <button class="btn" style="background:#EF4444;color:#fff;" id="pm-remove-confirm">确认移除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 续期 -->
+<div class="modal-backdrop" id="pm-modal-renew" aria-hidden="true">
+  <div class="modal-box pm-modal-sm-box">
+    <div class="modal-header">
+      <div><h2 class="modal-title">续期</h2><p class="modal-subtitle" id="pm-renew-subtitle">延长有效期</p></div>
+      <button class="modal-close-btn" data-pmclose="renew"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="pm-renew-id"/>
+      <div class="pm-form-row">
+        <label class="pm-label">新有效期 <span class="pm-req">*</span></label>
+        <input class="pm-input" id="pm-renew-date" type="date"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-pmclose="renew">取消</button>
+      <button class="btn btn-primary" id="pm-renew-confirm">确认续期</button>
+    </div>
+  </div>
+</div>
+
+<!-- 批量编辑角色 -->
+<div class="modal-backdrop" id="pm-modal-batch" aria-hidden="true">
+  <div class="modal-box pm-modal-sm-box">
+    <div class="modal-header">
+      <div><h2 class="modal-title">批量编辑角色</h2><p class="modal-subtitle" id="pm-batch-subtitle">批量修改所选成员的角色</p></div>
+      <button class="modal-close-btn" data-pmclose="batch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-row">
+        <label class="pm-label">目标角色 <span class="pm-req">*</span></label>
+        <select class="pm-select" id="pm-batch-role"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-pmclose="batch">取消</button>
+      <button class="btn btn-primary" id="pm-batch-confirm">批量修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加角色 -->
+<div class="modal-backdrop" id="pm-modal-add-role" aria-hidden="true">
+  <div class="modal-box pm-modal-sm-box">
+    <div class="modal-header">
+      <div><h2 class="modal-title">添加角色</h2><p class="modal-subtitle">创建自定义角色</p></div>
+      <button class="modal-close-btn" data-pmclose="add-role"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="pm-form-row">
+        <label class="pm-label">角色名称 <span class="pm-req">*</span></label>
+        <input class="pm-input" id="pm-new-role-name" type="text" placeholder="输入角色名称…"/>
+      </div>
+      <div class="pm-form-row">
+        <label class="pm-label">角色描述</label>
+        <input class="pm-input" id="pm-new-role-desc" type="text" placeholder="简要描述该角色的职责…"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-pmclose="add-role">取消</button>
+      <button class="btn btn-primary" id="pm-add-role-confirm">创建角色</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 发起工单 - 类型选择器 ════ -->
+<div id="wo-type-picker" class="modal-backdrop" aria-hidden="true">
+  <div class="wo-tp-box">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">发起工单</h2>
+        <p class="modal-subtitle">选择要发起的工单类型</p>
+      </div>
+      <button class="modal-close-btn" id="wo-tp-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="wo-tp-cards" id="wo-tp-cards">
+      <!-- 由 wo.js openWoTypePicker() 渲染 -->
+    </div>
+  </div>
+</div>
+
+<!-- ════ 发起工单 - 多步骤向导 ════ -->
+<div id="wo-wizard-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="wo-wiz-box">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="wo-wiz-title">发起工单</h2>
+        <p class="modal-subtitle" id="wo-wiz-sub">—</p>
+      </div>
+      <button class="modal-close-btn" id="wo-wiz-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <!-- 步骤指示器 -->
+    <div class="wo-wiz-steps" id="wo-wiz-steps"></div>
+    <!-- 内容区（由 JS 渲染）-->
+    <div class="wo-wiz-body" id="wo-wiz-body"></div>
+    <!-- 底部导航 -->
+    <div class="wo-wiz-footer">
+      <button class="btn btn-outline btn-sm" id="wo-wiz-prev" style="visibility:hidden;">← 上一步</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-outline" id="wo-wiz-cancel">取消</button>
+      <button class="btn btn-primary" id="wo-wiz-next">下一步 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 项目工作区 - 批量设置对接人 ════ -->
+<div id="wo-batch-dispatch-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box" style="width:500px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">批量设置对接人</h2>
+        <p class="modal-subtitle">为已选工单批量指定项目组跟进人</p>
+      </div>
+      <button class="modal-close-btn" id="wo-batch-dispatch-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div id="wo-batch-dispatch-body" style="padding:16px 24px;flex:1;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="wo-batch-dispatch-cancel">取消</button>
+      <button class="btn btn-primary" id="wo-batch-dispatch-confirm">确认设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 驳回工单 - 原因输入 ════ -->
+<div id="wo-reject-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box" style="width:440px;">
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">驳回工单</h2>
+        <p class="modal-subtitle">请说明驳回原因，服务方将收到通知</p>
+      </div>
+      <button class="modal-close-btn" id="wo-reject-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px 20px;">
+      <label class="form-label" style="margin-bottom:6px;display:block;">
+        驳回原因 <span style="color:#EF4444;">*</span>
+      </label>
+      <textarea id="wo-reject-reason" class="form-input" rows="4"
+        placeholder="请简要说明驳回原因，交付方将收到通知并重新处理…"
+        style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="wo-reject-cancel">取消</button>
+      <button class="btn btn-danger" id="wo-reject-confirm">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/im.js?v=20260312-autosplit1"></script>
+<script src="js/app.js?v=20260312-autosplit1"></script>
+<script src="js/pm.js?v=20260312-autosplit1"></script>
+<script src="js/gd.js?v=20260312-autosplit1"></script>
+<script src="js/gd2.js?v=20260312-autosplit1"></script>
+<script src="js/wo.js?v=20260312-autosplit1"></script>
+<script src="js/sm.js?v=20260312-autosplit1"></script>
+<script src="js/rc.js?v=20260329"></script>
+</body>
+</html>
