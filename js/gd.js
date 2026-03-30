@@ -775,31 +775,153 @@ function gdGetWeekDates(cur) {
 /* ═══════════════════════════════════════════════════════
    统计报表
    ═══════════════════════════════════════════════════════ */
+
+/* ── 报表辅助：SVG 柱状图 ── */
+function gdRptBarSvg(data, color) {
+  if (!data.length) return '<div style="text-align:center;color:#9CA3AF;padding:30px 0;font-size:0.82rem;">暂无数据</div>';
+  const maxV = Math.max(...data.map(d => d.value), 1);
+  const w = 380, h = 170, barW = Math.min(32, Math.max(12, (w - 60) / data.length - 6));
+  const grid = [0,1,2,3,4].map(i => {
+    const v = Math.round(maxV / 4 * i); const y = h - (i / 4) * h;
+    return `<line x1="36" y1="${y}" x2="${w}" y2="${y}" stroke="#F3F4F6" stroke-width="1"/>
+      <text x="32" y="${y+4}" fill="#9CA3AF" font-size="9" text-anchor="end">${v}</text>`;
+  }).join('');
+  const bars = data.map((d, i) => {
+    const x = 44 + i * ((w - 54) / data.length);
+    const bh = Math.max(2, (d.value / maxV) * h);
+    return `<rect x="${x-1}" y="0" width="${barW+2}" height="${h}" rx="3" fill="${color}" opacity="0.06"/>
+      <rect x="${x}" y="${h-bh}" width="${barW}" height="${bh}" rx="3" fill="${color}"/>
+      <text x="${x+barW/2}" y="${h-bh-5}" fill="${color}" font-size="9" text-anchor="middle" font-weight="600">${d.value}</text>
+      <text x="${x+barW/2}" y="${h+13}" fill="#6B7280" font-size="8" text-anchor="middle">${d.label.length>4?d.label.slice(0,4):d.label}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h+22}" width="100%" style="max-width:100%;">${grid}${bars}</svg>`;
+}
+
+/* ── 报表辅助：SVG 环形图 ── */
+function gdRptDonut(data) {
+  const total = data.reduce((s,d)=>s+d.value,0) || 1;
+  const r = 58, ir = 36, cx = 72, cy = 72;
+  let sa = -Math.PI/2;
+  const slices = data.map(d => {
+    const angle = (d.value/total)*Math.PI*2;
+    const x1=cx+r*Math.cos(sa), y1=cy+r*Math.sin(sa);
+    const x2=cx+r*Math.cos(sa+angle), y2=cy+r*Math.sin(sa+angle);
+    const ix1=cx+ir*Math.cos(sa+angle), iy1=cy+ir*Math.sin(sa+angle);
+    const ix2=cx+ir*Math.cos(sa), iy2=cy+ir*Math.sin(sa);
+    const large=angle>Math.PI?1:0;
+    const path=`M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${ix1},${iy1} A${ir},${ir} 0 ${large},0 ${ix2},${iy2} Z`;
+    sa+=angle;
+    return `<path d="${path}" fill="${d.color}"/>`;
+  });
+  return `<svg viewBox="0 0 144 144" width="144" height="144">${slices.join('')}
+    <text x="${cx}" y="${cy-4}" fill="#111827" font-size="18" font-weight="700" text-anchor="middle">${total}</text>
+    <text x="${cx}" y="${cy+12}" fill="#9CA3AF" font-size="9" text-anchor="middle">总计</text></svg>`;
+}
+
+/* ── 报表辅助：折线图 ── */
+function gdRptLine(data, series, colors, legends) {
+  const maxV = Math.max(...data.flatMap(d => series.map(k => d[k])), 1);
+  const w = 440, h = 160, pad = 36;
+  const grid = [0,1,2,3,4].map(i => {
+    const v = Math.round(maxV/4*i); const y = h-(i/4)*h;
+    return `<line x1="${pad}" y1="${y}" x2="${w}" y2="${y}" stroke="#F3F4F6" stroke-width="1"/>
+      <text x="${pad-4}" y="${y+4}" fill="#9CA3AF" font-size="9" text-anchor="end">${v}</text>`;
+  }).join('');
+  const lines = series.map((k,si) => {
+    const pts = data.map((d,i)=>`${pad+i/(data.length-1)*(w-pad-8)},${h-(d[k]/maxV)*h}`).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${colors[si]}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }).join('');
+  const dots = series.map((k,si) => data.map((d,i)=>{
+    const x=pad+i/(data.length-1)*(w-pad-8), y=h-(d[k]/maxV)*h;
+    return `<circle cx="${x}" cy="${y}" r="3" fill="#fff" stroke="${colors[si]}" stroke-width="1.5"/>`;
+  }).join('')).join('');
+  const labels = data.map((d,i)=>`<text x="${pad+i/(data.length-1)*(w-pad-8)}" y="${h+14}" fill="#9CA3AF" font-size="9" text-anchor="middle">${d.date}</text>`).join('');
+  const legendHtml = legends.map((l,i)=>`<div style="display:flex;align-items:center;gap:4px;font-size:0.74rem;color:#374151;">
+    <div style="width:14px;height:3px;background:${colors[i]};border-radius:2px;"></div>${l}</div>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h+20}" width="100%" style="max-width:100%;">${grid}${lines}${dots}${labels}</svg>
+    <div style="display:flex;gap:16px;margin-top:6px;justify-content:center;">${legendHtml}</div>`;
+}
+
+/* ── 报表辅助：水平条 ── */
+function gdRptHBar(data, color) {
+  if (!data.length) return '<div style="text-align:center;color:#9CA3AF;padding:20px 0;font-size:0.82rem;">暂无数据</div>';
+  const maxV = Math.max(...data.map(d=>d.value),1);
+  return data.map(d=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="width:72px;font-size:0.78rem;color:#374151;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.label}">${d.label}</div>
+    <div style="flex:1;background:#F3F4F6;border-radius:4px;height:20px;overflow:hidden;">
+      <div style="width:${(d.value/maxV)*100}%;height:100%;background:${color};border-radius:4px;transition:width .3s;"></div>
+    </div>
+    <div style="width:32px;font-size:0.78rem;color:#374151;font-weight:600;">${d.value}</div>
+  </div>`).join('');
+}
+
 function gdRenderReports() {
   const pane = document.getElementById('gd-pane-reports');
   if (!pane) return;
-  const { reportType, reportTimeRange } = gdState;
 
-  const orderStats = [
-    { label: '工单总数', value: GD_WORK_ORDERS.length, color: '#2563EB' },
-    { label: '待接单', value: GD_WORK_ORDERS.filter(o => o.status === '待接单').length, color: '#1D4ED8' },
-    { label: '已接单', value: GD_WORK_ORDERS.filter(o => o.status === '已接单').length, color: '#D97706' },
-    { label: '待验收', value: GD_WORK_ORDERS.filter(o => o.status === '待验收').length, color: '#A16207' },
-    { label: '验收通过', value: GD_WORK_ORDERS.filter(o => o.status === '验收通过').length, color: '#059669' },
-    { label: '已驳回', value: GD_WORK_ORDERS.filter(o => o.status === '已驳回').length, color: '#DC2626' },
+  const orgId = typeof gdSelectedDeliveryOrgId !== 'undefined' ? gdSelectedDeliveryOrgId : (typeof GD_DEMO_CONTEXT !== 'undefined' ? GD_DEMO_CONTEXT.orgId : '');
+  const allOrders = GD_WORK_ORDERS;
+  const orgOrders = allOrders.filter(o => o.providerOrgId === orgId);
+  const orders = orgOrders.length ? orgOrders : allOrders;
+
+  const statusList = ['待启用','待接单','已接单','待验收','验收通过','已驳回'];
+  const statusColors = { '待启用':'#6B7280','待接单':'#3B82F6','已接单':'#F59E0B','待验收':'#8B5CF6','验收通过':'#10B981','已驳回':'#EF4444' };
+  const total = orders.length;
+  const passed = orders.filter(o=>o.status==='验收通过').length;
+  const avgDoneRate = total ? Math.round(passed / total * 100) : 0;
+
+  const kpis = [
+    { label:'工单总数', value:total, color:'#2563EB', icon:'<rect x="3" y="12" width="5" height="9" rx="1" fill="#93C5FD"/><rect x="10" y="6" width="5" height="15" rx="1" fill="#60A5FA"/><rect x="17" y="2" width="5" height="19" rx="1" fill="#3B82F6"/>' },
+    { label:'待接单', value:orders.filter(o=>o.status==='待接单').length, color:'#3B82F6', icon:'<circle cx="12" cy="12" r="9" fill="none" stroke="#93C5FD" stroke-width="2"/><path d="M12 8v4l3 3" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>' },
+    { label:'已接单', value:orders.filter(o=>o.status==='已接单').length, color:'#F59E0B', icon:'<circle cx="12" cy="12" r="9" fill="none" stroke="#FCD34D" stroke-width="2"/><polyline points="8 12 11 15 16 9" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' },
+    { label:'待验收', value:orders.filter(o=>o.status==='待验收').length, color:'#8B5CF6', icon:'<rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="#C4B5FD" stroke-width="2"/><path d="M8 12h8M8 8h5" fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round"/>' },
+    { label:'验收通过', value:passed, color:'#10B981', icon:'<circle cx="12" cy="12" r="9" fill="none" stroke="#6EE7B7" stroke-width="2"/><polyline points="8 12 11 15 16 9" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' },
+    { label:'已驳回', value:orders.filter(o=>o.status==='已驳回').length, color:'#EF4444', icon:'<circle cx="12" cy="12" r="9" fill="none" stroke="#FCA5A5" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="9" x2="9" y2="15" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/>' },
+    { label:'完成率', value: avgDoneRate + '%', color:'#059669', icon:'<path d="M12 2a10 10 0 0 1 0 20 10 10 0 0 1 0-20" fill="none" stroke="#D1FAE5" stroke-width="2.5"/><path d="M12 2a10 10 0 0 1 7.07 17.07" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"/>' },
   ];
+
+  const statusData = statusList.map(s => ({ label: s, value: orders.filter(o=>o.status===s).length }));
+
+  const typeMap = {};
+  orders.forEach(o => { const t = o.woType || '其他'; typeMap[t] = (typeMap[t]||0)+1; });
+  const typeColors = ['#3B82F6','#F59E0B','#8B5CF6','#10B981','#EF4444','#EC4899'];
+  const typeData = Object.entries(typeMap).map(([name,value],i) => ({ name, value, color: typeColors[i % typeColors.length] }));
+
+  const moduleMap = {};
+  orders.forEach(o => { const m = gdLegacyNormServiceModule(o.serviceModule) || '其他'; moduleMap[m]=(moduleMap[m]||0)+1; });
+  const moduleData = Object.entries(moduleMap).map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value);
+
+  const deptMap = {};
+  orders.forEach(o => { const d = o.dept || o.workspaceDept || '未知'; deptMap[d]=(deptMap[d]||0)+1; });
+  const deptData = Object.entries(deptMap).map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value);
+
+  const handlerMap = {};
+  orders.forEach(o => {
+    const h2 = o.handler || '未分配';
+    if (!handlerMap[h2]) handlerMap[h2] = { recv:0, done:0 };
+    handlerMap[h2].recv++;
+    if (o.status === '验收通过') handlerMap[h2].done++;
+  });
+  const handlerData = Object.entries(handlerMap)
+    .map(([name,d])=>({name,recv:d.recv,done:d.done,rate:d.recv?Math.round(d.done/d.recv*100):0}))
+    .sort((a,b)=>b.recv-a.recv).slice(0,10);
+
+  const cfgIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
   pane.innerHTML = `
     <div class="gd-report-topbar">
       <div>
         <div class="gd-report-title">统计报表</div>
-        <div style="font-size:0.82rem;color:#6B7280;margin-top:2px;">查看各类统计数据和分析报告</div>
+        <div style="font-size:0.82rem;color:#6B7280;margin-top:2px;">当前交付组织全局视角的工单统计与分析</div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="gd-btn gd-btn-primary" onclick="gdOpenReportConfig()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          配置
-        </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label class="gd-schedule-org-field" style="margin-right:4px;">
+          <span>交付组织</span>
+          <select class="gd-filter-input gd-schedule-org-select" onchange="gdSelectedDeliveryOrgId=this.value;GD_DEMO_CONTEXT.orgId=this.value;gdRenderReports()">
+            ${(typeof GD_DELIVERY_ORGS!=='undefined'?GD_DELIVERY_ORGS:[]).map(o=>`<option value="${o.id}" ${o.id===orgId?'selected':''}>${o.name}</option>`).join('')}
+          </select>
+        </label>
+        <button class="gd-btn gd-btn-primary" onclick="gdOpenReportConfig()">${cfgIcon} 配置</button>
         <button class="gd-btn gd-btn-outline" onclick="showNotification('正在导出报表…')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           导出报表
@@ -807,149 +929,121 @@ function gdRenderReports() {
       </div>
     </div>
 
-    <div class="gd-stat-grid" style="margin-bottom:16px;">
-      ${orderStats.map(item => `
-        <div class="gd-stat-card">
-          <div class="gd-stat-label">${item.label}</div>
-          <div class="gd-stat-value" style="color:${item.color};">${item.value}</div>
+    <!-- KPI 卡片 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
+      ${kpis.map(k=>`
+        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:${k.color}10;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="22" height="22">${k.icon}</svg>
+          </div>
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;color:${k.color};line-height:1.2;">${k.value}</div>
+            <div style="font-size:0.74rem;color:#6B7280;">${k.label}</div>
+          </div>
         </div>`).join('')}
     </div>
 
-    <div class="gd-report-controls">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:6px;font-size:0.84rem;color:#374151;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" width="16" height="16"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          报表类型：
-        </div>
-        <div class="gd-report-type-tabs">
-          ${[['workload','工单量统计'],['efficiency','处理效率'],['performance','人员绩效'],['department','部门效能']].map(
-            ([k,l]) => `<button class="gd-rpt-tab ${reportType===k?'active':''}" onclick="gdSetReport('${k}')">${l}</button>`
-          ).join('')}
+    <!-- 第一行：工单池分布 + 状态分布 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">工单池分布</div>
+        <div style="display:flex;align-items:center;gap:24px;">
+          ${gdRptDonut(typeData)}
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1;">
+            ${typeData.map(d=>`<div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:10px;height:10px;border-radius:3px;background:${d.color};flex-shrink:0;"></div>
+              <span style="font-size:0.78rem;color:#374151;flex:1;">${d.name}</span>
+              <span style="font-size:0.82rem;font-weight:600;color:#111827;">${d.value}</span>
+              <span style="font-size:0.72rem;color:#9CA3AF;">${Math.round(d.value/total*100)}%</span>
+            </div>`).join('')}
+          </div>
         </div>
       </div>
-      <select class="gd-rpt-time-select" onchange="gdState.reportTimeRange=this.value;gdRenderReports()">
-        ${[['day','今日'],['week','本周'],['month','本月'],['quarter','本季度'],['year','本年']].map(
-          ([v,l]) => `<option value="${v}" ${reportTimeRange===v?'selected':''}>${l}</option>`
-        ).join('')}
-      </select>
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">工单状态分布</div>
+        ${gdRptBarSvg(statusData, '#3B82F6')}
+      </div>
     </div>
 
-    <div class="gd-report-content" id="gd-rpt-content">
-      ${gdRenderReportContent(reportType)}
-    </div>`;
-}
+    <!-- 第二行：服务模块分布 + 部门工单量 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">服务模块分布</div>
+        ${gdRptHBar(moduleData, '#8B5CF6')}
+      </div>
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">部门工单量</div>
+        ${gdRptBarSvg(deptData, '#10B981')}
+      </div>
+    </div>
 
-function gdSetReport(type) {
-  gdState.reportType = type;
-  gdRenderReports();
-}
+    <!-- 第三行：近7日趋势 -->
+    <div class="gd-card" style="padding:20px;margin-bottom:16px;">
+      <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">近 7 日工单趋势</div>
+      ${gdRptLine(GD_TREND_STATS, ['sub','done','ot'], ['#3B82F6','#10B981','#EF4444'], ['提交','完成','超时'])}
+    </div>
 
-function gdRenderReportContent(type) {
-  switch (type) {
-    case 'workload':
-      return `
-        <div class="gd-rpt-grid2" style="margin-bottom:16px;">
-          <div class="gd-card">
-            <div class="gd-section-title">工单池分布</div>
-            <div class="gd-donut-wrap">
-              ${gdRenderDonut(GD_TYPE_STATS)}
-              <div class="gd-donut-legend">
-                ${GD_TYPE_STATS.map(d => `
-                  <div class="gd-donut-legend-item">
-                    <div class="gd-donut-dot" style="background:${d.color};"></div>
-                    <span>${d.name}: ${d.value}</span>
-                  </div>`).join('')}
-              </div>
-            </div>
+    <!-- 第四行：处理人绩效 -->
+    <div class="gd-card" style="padding:20px;margin-bottom:16px;">
+      <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">处理人绩效排行</div>
+      ${handlerData.length ? `
+      <div style="overflow-x:auto;">
+        <table class="gd-table" style="width:100%;">
+          <thead><tr>
+            <th style="text-align:left;">处理人</th>
+            <th style="text-align:center;">接单量</th>
+            <th style="text-align:center;">完成量</th>
+            <th style="text-align:center;">完成率</th>
+            <th style="min-width:140px;">进度</th>
+            <th style="text-align:center;">评级</th>
+          </tr></thead>
+          <tbody>
+            ${handlerData.map(d=>{
+              const badge = d.rate>=80?'#10B981':d.rate>=50?'#F59E0B':'#EF4444';
+              const label = d.rate>=80?'优秀':d.rate>=50?'良好':'待提升';
+              return `<tr>
+                <td style="font-weight:500;">${d.name}</td>
+                <td style="text-align:center;">${d.recv}</td>
+                <td style="text-align:center;">${d.done}</td>
+                <td style="text-align:center;font-weight:600;color:${badge};">${d.rate}%</td>
+                <td><div style="background:#F3F4F6;border-radius:4px;height:8px;overflow:hidden;">
+                  <div style="width:${d.rate}%;height:100%;background:${badge};border-radius:4px;"></div>
+                </div></td>
+                <td style="text-align:center;">
+                  <span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:500;color:${badge};background:${badge}14;">${label}</span>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>` : '<div style="text-align:center;color:#9CA3AF;padding:24px 0;">暂无处理人数据</div>'}
+    </div>
+
+    <!-- 第五行：处理效率 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">部门平均处理时长</div>
+        ${GD_EFF_DATA.map(d=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:72px;font-size:0.78rem;color:#374151;text-align:right;flex-shrink:0;">${d.name}</div>
+          <div style="flex:1;background:#F3F4F6;border-radius:4px;height:22px;overflow:hidden;position:relative;">
+            <div style="width:${(d.avg/4*100)|0}%;height:100%;background:linear-gradient(90deg,#93C5FD,#3B82F6);border-radius:4px;"></div>
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.72rem;font-weight:600;color:#374151;">${d.avg}天</span>
           </div>
-          <div class="gd-card">
-            <div class="gd-section-title">部门工单量对比</div>
-            <div class="gd-bar-list">${gdRenderBarList(GD_DEPT_STATS,'#3B82F6')}</div>
-          </div>
-        </div>
-        <div class="gd-card">${gdRenderTrendCard()}</div>`;
-
-    case 'efficiency':
-      return `
-        <div class="gd-card">
-          <div class="gd-section-title">处理效率统计</div>
-          <div class="gd-bar-list" style="margin-bottom:20px;">
-            ${GD_EFF_DATA.map(d => `
-              <div class="gd-bar-row">
-                <div class="gd-bar-row-label">${d.name}</div>
-                <div class="gd-bar-track"><div class="gd-bar-fill" style="width:${(d.avg/4*100)|0}%;background:#3B82F6;"></div></div>
-                <div class="gd-bar-row-val" style="min-width:60px;">${d.avg}天 <span style="color:${d.otRate<5?'#059669':'#D97706'};">${d.otRate}%超时</span></div>
-              </div>`).join('')}
-          </div>
-          <table class="gd-table">
-            <thead><tr><th>部门</th><th>平均处理时长</th><th>超时率</th><th>评价</th></tr></thead>
-            <tbody>
-              ${GD_EFF_DATA.map(d => `<tr>
-                <td>${d.name}</td><td>${d.avg} 天</td>
-                <td style="color:${d.otRate<5?'#059669':d.otRate<10?'#D97706':'#DC2626'}">${d.otRate}%</td>
-                <td>${d.otRate<5?'优秀':d.otRate<10?'良好':'需改进'}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-
-    case 'performance':
-      return `
-        <div class="gd-card">
-          <div class="gd-section-title">人员绩效统计</div>
-          <div class="gd-bar-list" style="margin-bottom:20px;">
-            ${GD_PERF_DATA.map(d => `
-              <div class="gd-bar-row">
-                <div class="gd-bar-row-label">${d.name}</div>
-                <div class="gd-bar-track"><div class="gd-bar-fill" style="width:${(d.done/25*100)|0}%;background:#10B981;"></div></div>
-                <div class="gd-bar-row-val" style="min-width:60px;">完成${d.done}单 <span style="color:${d.rate>=95?'#059669':d.rate>=90?'#2563EB':'#D97706'}">${d.rate}%</span></div>
-              </div>`).join('')}
-          </div>
-          <table class="gd-table">
-            <thead><tr><th>姓名</th><th>接单量</th><th>完成量</th><th>及时率</th><th>绩效评级</th></tr></thead>
-            <tbody>
-              ${GD_PERF_DATA.map(d => `<tr>
-                <td>${d.name}</td><td>${d.recv}</td><td>${d.done}</td>
-                <td style="color:${d.rate>=95?'#059669':d.rate>=90?'#2563EB':'#D97706'}">${d.rate}%</td>
-                <td>${d.rate>=95?'优秀':d.rate>=90?'良好':'合格'}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-
-    case 'department':
-      return `
-        <div class="gd-card">
-          <div class="gd-section-title">部门效能对比</div>
-          <div class="gd-bar-list">${gdRenderBarList(GD_DEPT_STATS,'#8B5CF6')}</div>
-        </div>`;
-
-    default: return '';
-  }
-}
-
-function gdRenderTrendCard() {
-  const maxVal = 20;
-  const h = 140;
-  const w = 400;
-  const labels = GD_TREND_STATS.map(d => d.date);
-  const pts = (arr) => arr.map((v,i) => `${(i/(arr.length-1))*w},${h - (v/maxVal)*h}`).join(' ');
-  return `
-    <div class="gd-section-title">近7日工单趋势</div>
-    <svg viewBox="0 0 ${w} ${h+20}" width="100%" style="max-width:700px;display:block;">
-      ${[0,5,10,15,20].map(v => `
-        <line x1="0" y1="${h - (v/maxVal)*h}" x2="${w}" y2="${h - (v/maxVal)*h}" stroke="#F3F4F6" stroke-width="1"/>
-        <text x="0" y="${h - (v/maxVal)*h - 2}" fill="#9CA3AF" font-size="9">${v}</text>`).join('')}
-      <polyline points="${pts(GD_TREND_STATS.map(d=>d.sub))}" fill="none" stroke="#3B82F6" stroke-width="2"/>
-      <polyline points="${pts(GD_TREND_STATS.map(d=>d.done))}" fill="none" stroke="#10B981" stroke-width="2"/>
-      <polyline points="${pts(GD_TREND_STATS.map(d=>d.ot))}" fill="none" stroke="#EF4444" stroke-width="2"/>
-      ${GD_TREND_STATS.map((d,i) => `<text x="${(i/(GD_TREND_STATS.length-1))*w}" y="${h+14}" fill="#9CA3AF" font-size="10" text-anchor="middle">${d.date}</text>`).join('')}
-    </svg>
-    <div style="display:flex;gap:16px;margin-top:8px;">
-      ${[['#3B82F6','提交'],['#10B981','完成'],['#EF4444','超时']].map(([c,l]) => `
-        <div style="display:flex;align-items:center;gap:4px;font-size:0.76rem;color:#374151;">
-          <div style="width:14px;height:3px;background:${c};border-radius:2px;"></div>${l}
         </div>`).join('')}
+      </div>
+      <div class="gd-card" style="padding:20px;">
+        <div style="font-size:0.9rem;font-weight:600;color:#111827;margin-bottom:14px;">部门超时率</div>
+        ${GD_EFF_DATA.map(d=>{
+          const c = d.otRate<5?'#10B981':d.otRate<10?'#F59E0B':'#EF4444';
+          return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="width:72px;font-size:0.78rem;color:#374151;text-align:right;flex-shrink:0;">${d.name}</div>
+            <div style="flex:1;background:#F3F4F6;border-radius:4px;height:22px;overflow:hidden;position:relative;">
+              <div style="width:${d.otRate*5}%;height:100%;background:${c};border-radius:4px;"></div>
+              <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.72rem;font-weight:600;color:#374151;">${d.otRate}%</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`;
 }
 

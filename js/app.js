@@ -1288,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAddCustomerModal();
   initGroupAutocomplete();
   initBatchImportModal();
+  if (typeof initBatchReviewModal === 'function') initBatchReviewModal();
   initLedgerFilters();
   /* 默认显示仪表盘 */
   renderDashboard();

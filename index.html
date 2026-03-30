@@ -1527,6 +1527,151 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════
+     批量预审弹窗 Modal
+     ════════════════════════════════════════════════════════ -->
+<div id="rc-batch-modal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-box rcb-modal-box" role="dialog" aria-modal="true">
+
+    <!-- ── 头部 ── -->
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title" id="rcb-modal-title">批量预审</h2>
+        <p class="modal-subtitle" id="rcb-modal-subtitle">上传 Excel / CSV 文件，批量发起多个主体公司的预审单</p>
+      </div>
+      <button class="modal-close-btn" id="rcb-modal-close" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ════ View 1：上传 ════ -->
+    <div id="rcb-view-upload">
+
+      <!-- 下载模板区 -->
+      <div class="cbi-template-section">
+        <a class="cbi-template-link" id="rcb-download-tpl" href="#" download>
+          <svg class="cbi-excel-icon" viewBox="0 0 32 32" fill="none" width="28" height="28">
+            <rect width="32" height="32" rx="6" fill="#1D6F42"/>
+            <text x="16" y="22" font-size="14" fill="#fff" text-anchor="middle" font-weight="700" font-family="Arial">X</text>
+          </svg>
+          <div class="cbi-template-text">
+            <span class="cbi-template-name">下载 批量预审模板.xlsx</span>
+            <span class="cbi-template-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </span>
+          </div>
+        </a>
+        <p class="cbi-template-hint">模板包含：属于该生产工作区的公司名称、财务报表类型、总所项目编号、总所项目负责人、所属业务部门、一审/二审/2.5审老师、预计送审时间、项目类型、APT/SACP。填写审老师的行将自动生成对应类型的预审单。</p>
+      </div>
+
+      <!-- 拖拽上传区 -->
+      <div class="cbi-dropzone" id="rcb-dropzone">
+        <input type="file" id="rcb-file-input" accept=".xls,.xlsx,.csv" style="display:none;"/>
+
+        <!-- 默认状态 -->
+        <div class="cbi-dz-idle" id="rcb-dz-idle">
+          <div class="cbi-dz-cloud">
+            <svg viewBox="0 0 64 48" fill="none" width="64" height="48">
+              <path d="M52 38H14a10 10 0 0 1-1.5-19.9A16 16 0 0 1 42.1 12 12 12 0 0 1 52 38z" stroke="#C7D2FE" stroke-width="2.5" fill="#EEF2FF"/>
+              <line x1="32" y1="36" x2="32" y2="22" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"/>
+              <polyline points="26,28 32,22 38,28" stroke="#6366F1" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="cbi-dz-main">点击或将文件拖拽到这里上传</p>
+          <p class="cbi-dz-sub">支持 <span>.xls</span> <span>.xlsx</span> <span>.csv</span> 格式，单文件不超过 10 MB</p>
+          <button class="cbi-dz-btn" id="rcb-dz-btn">选择文件</button>
+        </div>
+
+        <!-- 文件已选中状态 -->
+        <div class="cbi-dz-selected" id="rcb-dz-selected" style="display:none;">
+          <div class="cbi-file-card">
+            <div class="cbi-file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="22" height="22">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="cbi-file-meta">
+              <span class="cbi-file-name" id="rcb-file-name">—</span>
+              <span class="cbi-file-size" id="rcb-file-size">—</span>
+            </div>
+            <button class="cbi-file-remove" id="rcb-file-remove" title="移除">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <!-- 进度条 -->
+          <div class="cbi-progress-wrap" id="rcb-progress-wrap">
+            <div class="cbi-progress-header">
+              <span class="cbi-progress-label" id="rcb-progress-label">正在解析文件…</span>
+              <span class="cbi-progress-pct" id="rcb-progress-pct">0%</span>
+            </div>
+            <div class="cbi-progress-track">
+              <div class="cbi-progress-bar" id="rcb-progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /rcb-dropzone -->
+
+    </div><!-- /rcb-view-upload -->
+
+    <!-- ════ View 2：结果反馈 ════ -->
+    <div id="rcb-view-result" style="display:none;">
+      <div class="cbi-result-body">
+
+        <!-- 成功图标 -->
+        <div class="cbi-result-icon">
+          <svg viewBox="0 0 48 48" fill="none" width="56" height="56">
+            <circle cx="24" cy="24" r="22" stroke="#6366F1" stroke-width="2.5" fill="#EEF2FF"/>
+            <polyline points="15,24 22,31 33,18" stroke="#4F46E5" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="cbi-result-stats">
+          <div class="cbi-stat-card cbi-stat-success">
+            <span class="cbi-stat-num" id="rcb-stat-success">0</span>
+            <span class="cbi-stat-label">成功发起</span>
+          </div>
+          <div class="cbi-stat-divider"></div>
+          <div class="cbi-stat-card cbi-stat-fail">
+            <span class="cbi-stat-num" id="rcb-stat-skip">0</span>
+            <span class="cbi-stat-label">跳过（已存在）</span>
+          </div>
+          <div class="cbi-stat-divider"></div>
+          <div class="cbi-stat-card cbi-stat-fail">
+            <span class="cbi-stat-num" id="rcb-stat-fail">0</span>
+            <span class="cbi-stat-label">失败</span>
+          </div>
+        </div>
+
+        <!-- 失败/跳过提示 -->
+        <div class="cbi-result-hint" id="rcb-result-hint" style="display:none;"></div>
+
+      </div>
+    </div><!-- /rcb-view-result -->
+
+    <!-- ── 底部按钮 ── -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="rcb-modal-cancel">取消</button>
+      <button class="btn btn-primary" id="rcb-modal-import" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="14" height="14">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+        批量预送审
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
      新建工作区 — 分步弹窗 Modal
      Step 1: 工作区类型选择
      Step 2: 基础信息填写

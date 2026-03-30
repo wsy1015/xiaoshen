@@ -1160,6 +1160,10 @@
 .gd-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #374151; }
 .gd-legend-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid transparent; }
 
+/* ══════════ 风控中心统计报表 ══════════ */
+#rc-pane-reports { overflow-y: auto; padding: 20px 24px; }
+.rc-rpt-section { margin-bottom: 0; }
+
 /* ══════════ 统计报表 ══════════ */
 .gd-report-topbar {
   display: flex;
@@ -3065,7 +3069,8 @@
 
 /* type card selection */
 .rc-review-type-cards {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding: 28px 24px 32px;
 }
@@ -3163,6 +3168,14 @@
 .rc-rv-company-table .gd-table { margin: 0; }
 .rc-rv-company-table .gd-table tr { cursor: pointer; }
 .rc-rv-row-selected { background: #EFF6FF !important; }
+.rc-rv-row-disabled {
+  opacity: 0.5; cursor: not-allowed !important; pointer-events: none; background: #F9FAFB;
+}
+.rc-rv-row-disabled td { color: #9CA3AF; }
+.rc-rv-tag-used {
+  display: inline-block; padding: 1px 8px; font-size: 0.72rem;
+  border-radius: 4px; font-weight: 500; background: #FEE2E2; color: #991B1B;
+}
 .rc-rv-tag {
   display: inline-block;
   padding: 1px 8px;
@@ -3251,11 +3264,15 @@
 /* ═══════════════════════════════════════════════════════
    送审管理面板（项目工作区 Tab）
    ═══════════════════════════════════════════════════════ */
-.rv-mgr-panel { display: flex; flex-direction: column; height: 100%; padding: 16px 20px; gap: 14px; box-sizing: border-box; }
+#pd-panel-review { overflow-y: auto; }
+#rv-mgr-container { display: flex; flex-direction: column; min-height: 0; height: 100%; padding: 16px 20px; box-sizing: border-box; }
+#rv-mgr-view-content { flex: 1; min-height: 0; overflow-y: auto; }
+#rv-mgr-view-content .gd-schedule-table-wrap { max-height: none; }
+.rv-mgr-panel { display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; }
 
 /* 统计网格 */
 .rv-stat-grid {
-  display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px;
 }
 .rv-stat-card {
   background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px 14px;
@@ -3342,6 +3359,132 @@
   padding: 60px 0; color: #9CA3AF;
 }
 .rv-empty p { margin: 12px 0 0; font-size: 0.85rem; }
+
+/* ═══════════════════════════════════════════════════════
+   送审单详情抽屉
+   ═══════════════════════════════════════════════════════ */
+.rv-detail-overlay {
+  position: fixed; inset: 0; z-index: 1000; display: none;
+}
+.rv-detail-backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+}
+.rv-detail-drawer {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: min(1120px, calc(100vw - 8px));
+  background: #fff; box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+  border-radius: 16px 0 0 16px; overflow: hidden;
+  animation: rvSlideIn .25s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes rvSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+.rv-detail-2col { display: flex; height: 100%; }
+.rv-detail-left {
+  width: 500px; max-width: 52%; flex-shrink: 0; overflow-y: auto;
+  padding: 22px 24px 24px; border-right: 1px solid #F0F0F0;
+  display: flex; flex-direction: column; gap: 0;
+}
+.rv-detail-right {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* 右列 Tab */
+.rv-detail-tabs {
+  display: flex; border-bottom: 1px solid #E5E7EB; padding: 0 16px; flex-shrink: 0;
+}
+.rv-itab {
+  padding: 12px 16px; font-size: 0.8rem; font-weight: 500; color: #6B7280;
+  background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all .15s;
+}
+.rv-itab:hover { color: #374151; }
+.rv-itab.active { color: #4F46E5; border-bottom-color: #4F46E5; font-weight: 600; }
+
+.rv-detail-tab-content { flex: 1; overflow-y: auto; }
+
+/* 文件表格 */
+.rv-detail-file-table-wrap {
+  border: 1px solid #E5E7EB; border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+}
+.rv-detail-file-table {
+  width: 100%; border-collapse: collapse; font-size: 0.78rem; white-space: nowrap;
+}
+.rv-detail-file-table th {
+  background: #F8FAFC; padding: 8px 10px; font-size: 0.73rem; color: #6B7280;
+  font-weight: 600; text-align: left; border-bottom: 1px solid #E5E7EB;
+}
+.rv-detail-file-table td {
+  padding: 8px 10px; border-bottom: 1px solid #F3F4F6; color: #374151;
+}
+.rv-detail-file-table tr:last-child td { border-bottom: none; }
+
+/* 上传区 */
+.rv-upload-zone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 24px; border: 2px dashed #D1D5DB; border-radius: 10px; margin-top: 12px;
+  cursor: pointer; transition: all .15s; color: #9CA3AF; font-size: 0.8rem;
+}
+.rv-upload-zone:hover { border-color: #818CF8; background: #F5F3FF; color: #6366F1; }
+
+/* 禁止重复滑入动画 */
+.rv-detail-drawer.rv-no-anim { animation: none; }
+
+/* 行可点击 */
+.rv-clickable-row { cursor: pointer; }
+.rv-clickable-row:hover td { background: #F5F3FF !important; }
+
+/* 日常沟通 */
+.rv-chat-msg {
+  display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F4F6;
+}
+.rv-chat-msg:last-child { border-bottom: none; }
+.rv-chat-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.75rem; font-weight: 600;
+}
+.rv-chat-body { flex: 1; min-width: 0; }
+.rv-chat-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+.rv-chat-author { font-size: 0.8rem; font-weight: 600; color: #1F2937; }
+.rv-chat-dept { font-size: 0.72rem; color: #9CA3AF; }
+.rv-chat-time { font-size: 0.7rem; color: #9CA3AF; margin-left: auto; }
+.rv-chat-text { font-size: 0.82rem; color: #374151; line-height: 1.5; white-space: pre-wrap; }
+.rv-chat-input-wrap {
+  display: flex; gap: 8px; align-items: flex-end;
+  border-top: 1px solid #E5E7EB; padding-top: 10px;
+}
+.rv-chat-input {
+  flex: 1; border: 1px solid #D1D5DB; border-radius: 8px; padding: 8px 10px;
+  font-size: 0.82rem; resize: none; outline: none; font-family: inherit;
+}
+.rv-chat-input:focus { border-color: #818CF8; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+
+/* 风控中心 — 送审单总览组织选择 */
+.rc-ord-org-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.rc-ord-org-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
+.rc-ord-org-btn {
+  padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500;
+  border: 1px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer;
+  transition: all .15s;
+}
+.rc-ord-org-btn:hover { border-color: #818CF8; color: #4F46E5; }
+.rc-ord-org-btn.active { background: #4F46E5; color: #fff; border-color: #4F46E5; }
+
+/* 批量预审 */
+.rc-review-type-batch { border-style: dashed !important; }
+.rcb-modal-box {
+  width: 560px;
+  max-width: calc(100vw - 48px);
+  display: flex;
+  flex-direction: column;
+}
+.rcb-modal-box .modal-footer {
+  border-top: 1px solid #F3F4F6;
+  padding: 14px 28px;
+}
+
 .rc-rv-date-input {
   width: 100%; padding: 7px 10px; border: 1px solid #D1D5DB; border-radius: 8px;
   font-size: 0.82rem; box-sizing: border-box; outline: none;
